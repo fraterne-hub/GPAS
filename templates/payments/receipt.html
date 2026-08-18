@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Payment Receipt" %}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="garl-card overflow-hidden">
+        <!-- Success header -->
+        <div style="background:linear-gradient(135deg,#0d4e1a,#198754);padding:2rem;text-align:center;">
+          <div style="width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:2rem;">
+            ✓
+          </div>
+          <h2 class="text-white mb-1">{% trans "Payment Successful!" %}</h2>
+          <p style="color:rgba(255,255,255,.75);margin:0;">{% trans "Your purchase is confirmed" %}</p>
+        </div>
+
+        <div class="p-4">
+          <!-- Content -->
+          <div class="p-3 rounded mb-4" style="background:var(--garl-off-white);border-left:4px solid var(--garl-gold);">
+            <div class="text-muted small mb-1">{% trans "PURCHASED" %}</div>
+            <div class="fw-bold fs-6">{{ content_title }}</div>
+            <div class="text-muted small">{{ purchase.content_price.get_content_type_display }}</div>
+          </div>
+
+          <!-- Receipt details -->
+          <table style="width:100%;font-size:.9rem;">
+            <tr class="border-bottom"><td class="py-2 text-muted">{% trans "Transaction ID" %}</td><td class="py-2 fw-bold font-monospace small">{{ purchase.transaction_id }}</td></tr>
+            <tr class="border-bottom"><td class="py-2 text-muted">{% trans "Amount Paid" %}</td><td class="py-2 fw-bold">{{ purchase.currency }} {{ purchase.amount }}</td></tr>
+            <tr class="border-bottom"><td class="py-2 text-muted">{% trans "Date" %}</td><td class="py-2">{{ purchase.completed_at|date:"M d, Y — H:i" }} UTC</td></tr>
+            <tr><td class="py-2 text-muted">{% trans "Status" %}</td><td class="py-2"><span class="badge bg-success">✓ {% trans "Completed" %}</span></td></tr>
+          </table>
+
+          <div class="alert alert-info mt-4 small">
+            <i class="bi bi-envelope me-2"></i>
+            {% trans "A receipt with a download link has been sent to" %} <strong>{{ user.email }}</strong>.
+          </div>
+
+          <div class="d-grid gap-2 mt-4">
+            <a href="{% url 'payments:download' purchase.content_price.content_type purchase.content_price.object_id purchase.transaction_id %}"
+               class="btn btn-garl-gold btn-lg">
+              <i class="bi bi-download me-2"></i>{% trans "Download / Access Content" %}
+            </a>
+            <a href="{% url 'payments:my_purchases' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-bag me-2"></i>{% trans "My Purchases" %}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

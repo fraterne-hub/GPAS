@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Library Resources" %}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'library:home' %}">{% trans "Library" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Resources" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2"></i>{% trans "Filter" %}</h6>
+        <form method="get">
+          <div class="mb-3"><input type="search" name="q" class="form-control form-control-sm" value="{{ q }}" placeholder="{% trans 'Search title, author, ISBN...' %}" /></div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Type" %}</label>
+            <select name="type" class="form-select form-select-sm">
+              <option value="">{% trans "All Types" %}</option>
+              {% for val, label in types %}<option value="{{ val }}" {% if request.GET.type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Collection" %}</label>
+            <select name="collection" class="form-select form-select-sm">
+              <option value="">{% trans "All Collections" %}</option>
+              {% for col in collections %}<option value="{{ col.pk }}" {% if request.GET.collection == col.pk|stringformat:"i" %}selected{% endif %}>{{ col.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-sm btn-garl-gold">{% trans "Apply" %}</button>
+            <a href="{% url 'library:resource_list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="col-lg-9">
+      <h4 class="mb-3">{% trans "Library Resources" %}{% if q %}<small class="text-muted fs-6 ms-2">— "{{ q }}"</small>{% endif %}</h4>
+      {% if page_obj %}
+      <div class="row g-3">
+        {% for res in page_obj %}
+        <div class="col-12">
+          <div class="garl-card p-3 d-flex gap-3 align-items-start">
+            <div style="min-width:40px;font-size:2rem;color:var(--garl-gold);">
+              <i class="bi {% if res.resource_type == 'book' %}bi-book{% elif res.resource_type == 'journal' %}bi-journal-text{% elif res.resource_type == 'dataset' %}bi-database{% else %}bi-file-earmark-text{% endif %}"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex gap-2 mb-1 flex-wrap">
+                <span class="badge bg-secondary small">{{ res.get_resource_type_display }}</span>
+                <span class="badge {% if res.access_level == 'open' %}bg-success{% elif res.access_level == 'registered' %}bg-warning text-dark{% else %}bg-danger{% endif %} small">{{ res.get_access_level_display }}</span>
+              </div>
+              <h6 class="mb-1"><a href="{% url 'library:resource_detail' res.pk %}" class="garl-link-dark">{{ res.title }}</a></h6>
+              <div class="d-flex flex-wrap gap-3 text-muted small">
+                {% if res.author %}<span><i class="bi bi-person me-1"></i>{{ res.author|truncatechars:30 }}</span>{% endif %}
+                {% if res.publisher %}<span><i class="bi bi-building me-1"></i>{{ res.publisher|truncatechars:25 }}</span>{% endif %}
+                {% if res.year %}<span><i class="bi bi-calendar3 me-1"></i>{{ res.year }}</span>{% endif %}
+              </div>
+            </div>
+            <div class="d-flex flex-column gap-2 flex-shrink-0">
+              <a href="{% url 'library:resource_detail' res.pk %}" class="btn btn-xs btn-outline-primary">{% trans "View" %}</a>
+              {% if res.file or res.external_url %}
+              <a href="{% url 'library:download' res.pk %}" class="btn btn-xs btn-garl-gold"><i class="bi bi-download"></i></a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if page_obj.has_other_pages %}
+      <nav class="mt-4"><ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+      </ul></nav>
+      {% endif %}
+      {% else %}
+      <div class="garl-empty-state text-center py-5">
+        <i class="bi bi-collection fs-1 text-muted mb-3 d-block"></i>
+        <h5>{% trans "No resources found" %}</h5>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

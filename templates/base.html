@@ -1,0 +1,676 @@
+{% load i18n static %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" data-bs-theme="{{ user_theme|default:'light' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{% block meta_description %}Global Academic Research Library — Discover. Research. Learn. Innovate. Publish.{% endblock %}" />
+  <title>{% block title %}GARL{% endblock %} | {{ GARL_SITE_NAME }}</title>
+
+  <!-- Bootstrap 5.3 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- GARL Design System -->
+  <link rel="stylesheet" href="{% static 'css/garl.css' %}" />
+  {% if site_settings and site_settings.favicon %}
+  <link rel="icon" type="image/png" href="{{ site_settings.favicon.url }}" />
+  {% endif %}
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="garl-body">
+
+  <!-- Skip navigation -->
+  <a href="#main-content" class="visually-hidden-focusable btn btn-sm btn-primary position-absolute top-0 start-0 m-2" style="z-index:9999;">
+    {% trans "Skip to content" %}
+  </a>
+
+  <!-- ════════════════════════════════════ TOP INFO BAR (desktop only) ══ -->
+  <div class="garl-topbar d-none d-lg-flex align-items-center justify-content-between px-4 py-1" id="garlTopbar">
+    <small class="text-muted">
+      <i class="bi bi-globe2 me-1"></i>{% trans "Global Academic Research Library" %}
+    </small>
+    <div class="d-flex align-items-center gap-3">
+      <form action="{% url 'set_language' %}" method="post" class="d-inline">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.path }}" />
+        <select name="language" class="form-select form-select-sm garl-lang-select"
+                onchange="this.form.submit()" aria-label="{% trans 'Select language' %}">
+          <option value="en"      {% if LANGUAGE_CODE == 'en'      %}selected{% endif %}>🌐 English</option>
+          <option value="fr"      {% if LANGUAGE_CODE == 'fr'      %}selected{% endif %}>🇫🇷 Français</option>
+          <option value="es"      {% if LANGUAGE_CODE == 'es'      %}selected{% endif %}>🇪🇸 Español</option>
+          <option value="ar"      {% if LANGUAGE_CODE == 'ar'      %}selected{% endif %}>🇸🇦 العربية</option>
+          <option value="zh-hans" {% if LANGUAGE_CODE == 'zh-hans' %}selected{% endif %}>🇨🇳 中文</option>
+          <option value="pt"      {% if LANGUAGE_CODE == 'pt'      %}selected{% endif %}>🇵🇹 Português</option>
+        </select>
+      </form>
+      {% if user.is_authenticated %}
+      <button type="button" class="btn btn-xs btn-outline-secondary garl-theme-btn"
+              id="themeToggleBtn" aria-label="{% trans 'Toggle dark/light mode' %}">
+        <i class="bi {% if user_theme == 'dark' %}bi-sun-fill{% else %}bi-moon-fill{% endif %}"></i>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ MAIN NAVBAR ══ -->
+  <nav class="navbar navbar-expand-xl garl-navbar" id="garlNavbar"
+       aria-label="{% trans 'Main navigation' %}">
+    <div class="container-xl px-3 px-lg-4">
+
+      <!-- ── Brand ── -->
+      <a class="navbar-brand d-flex align-items-center gap-2 me-3" href="{% url 'core:home' %}">
+        {% if site_settings and site_settings.site_logo_white %}
+          <img src="{{ site_settings.site_logo_white.url }}"
+               alt="{{ GARL_SITE_NAME }}" class="garl-navbar-logo" />
+        {% else %}
+        <div class="garl-logo-icon flex-shrink-0"><i class="bi bi-journal-richtext"></i></div>
+        <div class="lh-1 d-none d-sm-block">
+          <div class="garl-brand-title">GARL</div>
+          <div class="garl-brand-subtitle d-none d-lg-block">Global Academic Research Library</div>
+        </div>
+        {% endif %}
+      </a>
+
+      <!-- ── Mobile right: notifications + hamburger ── -->
+      <div class="d-flex align-items-center gap-2 ms-auto d-xl-none">
+        {% if user.is_authenticated %}
+        <a href="{% url 'notifications:list' %}"
+           class="btn btn-sm garl-nav-icon-btn position-relative"
+           aria-label="{% trans 'Notifications' %}">
+          <i class="bi bi-bell fs-5"></i>
+          {% if unread_notification_count > 0 %}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                style="font-size:.6rem;">{{ unread_notification_count }}</span>
+          {% endif %}
+        </a>
+        {% endif %}
+        <a href="{% url 'search:results' %}" class="btn btn-sm garl-nav-icon-btn" aria-label="{% trans 'Search' %}">
+          <i class="bi bi-search fs-5"></i>
+        </a>
+        <!-- Hamburger — opens offcanvas -->
+        <button class="garl-hamburger" type="button"
+                data-bs-toggle="offcanvas" data-bs-target="#mobileNav"
+                aria-controls="mobileNav" aria-label="{% trans 'Open menu' %}">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <!-- ── Desktop nav (xl+) ── -->
+      <div class="collapse navbar-collapse" id="garlDesktopNav">
+        <ul class="navbar-nav align-items-center me-auto" style="gap:.1rem;">
+
+          <!-- Home -->
+          <li class="nav-item">
+            <a class="nav-link garl-nav-link {% if request.resolver_match.namespace == 'core' %}active{% endif %}"
+               href="{% url 'core:home' %}">
+              <i class="bi bi-house-fill me-1"></i>{% trans "Home" %}
+            </a>
+          </li>
+
+          <!-- Research -->
+          <li class="nav-item dropdown">
+            <a class="nav-link garl-nav-link dropdown-toggle {% if request.resolver_match.namespace == 'research' or request.resolver_match.namespace == 'library' %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-search me-1"></i>{% trans "Research" %}
+            </a>
+            <ul class="dropdown-menu garl-dropdown">
+              <li><h6 class="dropdown-header small text-uppercase opacity-50">{% trans "Research Center" %}</h6></li>
+              <li><a class="dropdown-item" href="{% url 'research:home' %}"><i class="bi bi-house-door me-2 text-primary"></i>{% trans "Overview" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'research:paper_list' %}"><i class="bi bi-file-earmark-text me-2 text-primary"></i>{% trans "Research Papers" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'research:project_list' %}"><i class="bi bi-diagram-3 me-2 text-primary"></i>{% trans "Research Projects" %}</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'library:home' %}"><i class="bi bi-collection me-2 text-primary"></i>{% trans "Digital Library" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'library:resource_list' %}"><i class="bi bi-archive me-2 text-primary"></i>{% trans "All Resources" %}</a></li>
+            </ul>
+          </li>
+
+          <!-- Publishing -->
+          <li class="nav-item dropdown">
+            <a class="nav-link garl-nav-link dropdown-toggle {% if request.resolver_match.namespace == 'publishing' %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-journals me-1"></i>{% trans "Publishing" %}
+            </a>
+            <ul class="dropdown-menu garl-dropdown">
+              <li><h6 class="dropdown-header small text-uppercase opacity-50">{% trans "Publishing Center" %}</h6></li>
+              <li><a class="dropdown-item" href="{% url 'publishing:home' %}"><i class="bi bi-house-door me-2 text-warning"></i>{% trans "Overview" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'publishing:publication_list' %}"><i class="bi bi-journals me-2 text-warning"></i>{% trans "Publications" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'publishing:book_list' %}"><i class="bi bi-book me-2 text-warning"></i>{% trans "Books" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'publishing:journal_list' %}"><i class="bi bi-journal-text me-2 text-warning"></i>{% trans "Journals" %}</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'publishing:submit' %}"><i class="bi bi-upload me-2 text-success"></i>{% trans "Submit Publication" %}</a></li>
+            </ul>
+          </li>
+
+          <!-- Innovation -->
+          <li class="nav-item dropdown">
+            <a class="nav-link garl-nav-link dropdown-toggle {% if request.resolver_match.namespace == 'innovation' %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-lightbulb me-1"></i>{% trans "Innovation" %}
+            </a>
+            <ul class="dropdown-menu garl-dropdown">
+              <li><a class="dropdown-item" href="{% url 'innovation:home' %}"><i class="bi bi-house-door me-2 text-warning"></i>{% trans "Innovation Hub" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'innovation:project_list' %}"><i class="bi bi-rocket me-2 text-warning"></i>{% trans "Browse Projects" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'innovation:submit' %}"><i class="bi bi-plus-circle me-2 text-success"></i>{% trans "Submit Project" %}</a></li>
+            </ul>
+          </li>
+
+          <!-- Learning -->
+          <li class="nav-item dropdown">
+            <a class="nav-link garl-nav-link dropdown-toggle {% if request.resolver_match.namespace == 'learning' %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-mortarboard me-1"></i>{% trans "Learning" %}
+            </a>
+            <ul class="dropdown-menu garl-dropdown">
+              <li><a class="dropdown-item" href="{% url 'learning:home' %}"><i class="bi bi-house-door me-2 text-info"></i>{% trans "Learning Center" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'learning:course_list' %}"><i class="bi bi-play-circle me-2 text-info"></i>{% trans "Browse Courses" %}</a></li>
+              {% if user.is_authenticated %}
+              <li><a class="dropdown-item" href="{% url 'learning:my_courses' %}"><i class="bi bi-collection-play me-2 text-info"></i>{% trans "My Courses" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'learning:certificates' %}"><i class="bi bi-patch-check me-2 text-info"></i>{% trans "Certificates" %}</a></li>
+              {% endif %}
+            </ul>
+          </li>
+
+          <!-- Health -->
+          <li class="nav-item dropdown">
+            <a class="nav-link garl-nav-link dropdown-toggle {% if request.resolver_match.namespace == 'health_science' %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-heart-pulse me-1"></i>{% trans "Health" %}
+            </a>
+            <ul class="dropdown-menu garl-dropdown">
+              <li><a class="dropdown-item" href="{% url 'health_science:home' %}"><i class="bi bi-hospital me-2 text-danger"></i>{% trans "Health Science Hub" %}</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'health_science:discipline' 'nursing' %}"><i class="bi bi-person-badge me-2 text-danger"></i>{% trans "Nursing" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'health_science:discipline' 'medicine' %}"><i class="bi bi-heart-pulse me-2 text-danger"></i>{% trans "Medicine" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'health_science:discipline' 'pharmacy' %}"><i class="bi bi-capsule me-2 text-danger"></i>{% trans "Pharmacy" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'health_science:discipline' 'public_health' %}"><i class="bi bi-shield-check me-2 text-danger"></i>{% trans "Public Health" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'health_science:resource_list' %}"><i class="bi bi-collection me-2 text-danger"></i>{% trans "All Resources" %}</a></li>
+            </ul>
+          </li>
+
+          <!-- Community -->
+          <li class="nav-item dropdown">
+            <a class="nav-link garl-nav-link dropdown-toggle {% if request.resolver_match.namespace == 'community' or request.resolver_match.namespace == 'events' %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-people me-1"></i>{% trans "Community" %}
+            </a>
+            <ul class="dropdown-menu garl-dropdown">
+              <li><a class="dropdown-item" href="{% url 'community:home' %}"><i class="bi bi-globe me-2 text-success"></i>{% trans "Directory" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'community:institution_list' %}"><i class="bi bi-building me-2 text-success"></i>{% trans "Institutions" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'community:researcher_list' %}"><i class="bi bi-person-workspace me-2 text-success"></i>{% trans "Researchers" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'events:list' %}"><i class="bi bi-calendar-event me-2 text-success"></i>{% trans "Events" %}</a></li>
+            </ul>
+          </li>
+
+          <!-- Support -->
+          <li class="nav-item dropdown">
+            <a class="nav-link garl-nav-link dropdown-toggle {% if request.resolver_match.namespace == 'support' or request.resolver_match.namespace == 'ai_support' %}active{% endif %}"
+               href="#" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-headset me-1"></i>{% trans "Support" %}
+            </a>
+            <ul class="dropdown-menu garl-dropdown">
+              <li><a class="dropdown-item" href="{% url 'support:home' %}"><i class="bi bi-headset me-2"></i>{% trans "Help Center" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'support:faq' %}"><i class="bi bi-question-circle me-2"></i>{% trans "FAQs" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'support:create_ticket' %}"><i class="bi bi-ticket me-2"></i>{% trans "Open Ticket" %}</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item" href="{% url 'ai_support:chat' %}">
+                  <i class="bi bi-robot me-2 text-warning"></i>{% trans "AI Assistant" %}
+                  <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">NEW</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+        </ul>
+
+        <!-- ── Right side controls ── -->
+        <div class="d-flex align-items-center gap-2 ms-2">
+
+          <!-- Search -->
+          <a href="{% url 'search:results' %}" class="btn btn-sm garl-nav-icon-btn"
+             aria-label="{% trans 'Search' %}" title="{% trans 'Search GARL' %}">
+            <i class="bi bi-search"></i>
+          </a>
+
+          {% if user.is_authenticated %}
+          <!-- Notifications -->
+          <a href="{% url 'notifications:list' %}"
+             class="btn btn-sm garl-nav-icon-btn position-relative"
+             aria-label="{% trans 'Notifications' %}">
+            <i class="bi bi-bell"></i>
+            {% if unread_notification_count > 0 %}
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                  style="font-size:.6rem;">{{ unread_notification_count }}</span>
+            {% endif %}
+          </a>
+
+          <!-- User dropdown -->
+          <div class="dropdown">
+            <button class="btn btn-sm garl-user-btn d-flex align-items-center gap-2"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" alt="{{ user.get_full_name }}"
+                     class="garl-avatar-sm rounded-circle" />
+              {% else %}
+                <div class="garl-avatar-sm garl-avatar-initials rounded-circle">
+                  {{ user.first_name|first }}{{ user.last_name|first }}
+                </div>
+              {% endif %}
+              <span class="d-none d-xxl-inline small">{{ user.get_short_name }}</span>
+              <i class="bi bi-chevron-down small opacity-75"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end garl-dropdown" style="min-width:220px;">
+              <li>
+                <div class="px-3 py-2 border-bottom">
+                  <div class="fw-semibold small">{{ user.get_full_name }}</div>
+                  <div class="text-muted" style="font-size:.75rem;">{{ user.get_role_display }}</div>
+                </div>
+              </li>
+              <li><a class="dropdown-item" href="{% url 'dashboard:home' %}"><i class="bi bi-speedometer2 me-2 text-primary"></i>{% trans "Dashboard" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-person-circle me-2"></i>{% trans "My Profile" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'accounts:preferences' %}"><i class="bi bi-gear me-2"></i>{% trans "Preferences" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'payments:my_purchases' %}"><i class="bi bi-bag-check me-2 text-success"></i>{% trans "My Purchases" %}</a></li>
+              <li><a class="dropdown-item" href="{% url 'payments:publisher_dashboard' %}"><i class="bi bi-graph-up-arrow me-2 text-warning"></i>{% trans "My Earnings" %}</a></li>
+              {% if user.is_any_admin %}
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'dashboard:admin_dashboard' %}"><i class="bi bi-shield-lock me-2 text-warning"></i>{% trans "Admin Panel" %}</a></li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger">
+                    <i class="bi bi-box-arrow-right me-2"></i>{% trans "Sign Out" %}
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </div>
+
+          {% else %}
+          <!-- Guest buttons -->
+          <a href="{% url 'accounts:login' %}" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-person me-1"></i>{% trans "Sign In" %}
+          </a>
+          <a href="{% url 'accounts:register' %}" class="btn btn-sm btn-garl-gold">
+            <i class="bi bi-person-plus me-1"></i>{% trans "Register" %}
+          </a>
+          {% endif %}
+
+        </div>
+      </div><!-- /.collapse -->
+    </div><!-- /.container-xl -->
+  </nav>
+
+  <!-- ══════════════════════════════════════ MOBILE OFFCANVAS MENU ══ -->
+  <div class="offcanvas offcanvas-start garl-offcanvas" tabindex="-1"
+       id="mobileNav" aria-labelledby="mobileNavLabel" style="width:300px;">
+    <div class="offcanvas-header">
+      <div class="d-flex align-items-center gap-2">
+        <div class="garl-logo-icon"><i class="bi bi-journal-richtext"></i></div>
+        <div>
+          <div class="garl-brand-title">GARL</div>
+          <div style="font-size:.65rem;color:rgba(255,255,255,.5);">Academic Library</div>
+        </div>
+      </div>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+              aria-label="{% trans 'Close menu' %}"></button>
+    </div>
+
+    <div class="offcanvas-body d-flex flex-column p-0">
+
+      <!-- Search -->
+      <div class="p-3 border-bottom" style="border-color:rgba(255,255,255,.1)!important;">
+        <form action="{% url 'search:results' %}" method="get">
+          <div class="input-group input-group-sm">
+            <input type="search" name="q" class="form-control garl-search-input"
+                   placeholder="{% trans 'Search GARL...' %}" />
+            <button class="btn btn-garl-gold" type="submit"><i class="bi bi-search"></i></button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Nav accordion -->
+      <div class="accordion accordion-flush garl-mobile-accordion flex-grow-1 overflow-auto"
+           id="mobileNavAccordion">
+
+        <!-- Home -->
+        <div class="p-0">
+          <a class="garl-mob-link" href="{% url 'core:home' %}">
+            <i class="bi bi-house-fill me-2"></i>{% trans "Home" %}
+          </a>
+        </div>
+
+        <!-- Research -->
+        <div class="accordion-item garl-mob-accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed garl-mob-accordion-btn" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mob-research">
+              <i class="bi bi-search me-2"></i>{% trans "Research" %}
+            </button>
+          </h2>
+          <div id="mob-research" class="accordion-collapse collapse" data-bs-parent="#mobileNavAccordion">
+            <div class="accordion-body garl-mob-submenu">
+              <a href="{% url 'research:home' %}"><i class="bi bi-house-door me-2"></i>{% trans "Research Center" %}</a>
+              <a href="{% url 'research:paper_list' %}"><i class="bi bi-file-earmark-text me-2"></i>{% trans "Research Papers" %}</a>
+              <a href="{% url 'research:project_list' %}"><i class="bi bi-diagram-3 me-2"></i>{% trans "Research Projects" %}</a>
+              <a href="{% url 'library:home' %}"><i class="bi bi-collection me-2"></i>{% trans "Digital Library" %}</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Publishing -->
+        <div class="accordion-item garl-mob-accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed garl-mob-accordion-btn" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mob-publishing">
+              <i class="bi bi-journals me-2"></i>{% trans "Publishing" %}
+            </button>
+          </h2>
+          <div id="mob-publishing" class="accordion-collapse collapse" data-bs-parent="#mobileNavAccordion">
+            <div class="accordion-body garl-mob-submenu">
+              <a href="{% url 'publishing:publication_list' %}"><i class="bi bi-journals me-2"></i>{% trans "Publications" %}</a>
+              <a href="{% url 'publishing:book_list' %}"><i class="bi bi-book me-2"></i>{% trans "Books" %}</a>
+              <a href="{% url 'publishing:journal_list' %}"><i class="bi bi-journal-text me-2"></i>{% trans "Journals" %}</a>
+              <a href="{% url 'publishing:submit' %}"><i class="bi bi-upload me-2"></i>{% trans "Submit Publication" %}</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Innovation -->
+        <div class="accordion-item garl-mob-accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed garl-mob-accordion-btn" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mob-innovation">
+              <i class="bi bi-lightbulb me-2"></i>{% trans "Innovation" %}
+            </button>
+          </h2>
+          <div id="mob-innovation" class="accordion-collapse collapse" data-bs-parent="#mobileNavAccordion">
+            <div class="accordion-body garl-mob-submenu">
+              <a href="{% url 'innovation:home' %}"><i class="bi bi-house-door me-2"></i>{% trans "Innovation Hub" %}</a>
+              <a href="{% url 'innovation:project_list' %}"><i class="bi bi-rocket me-2"></i>{% trans "Browse Projects" %}</a>
+              <a href="{% url 'innovation:submit' %}"><i class="bi bi-plus-circle me-2"></i>{% trans "Submit Project" %}</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Learning -->
+        <div class="accordion-item garl-mob-accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed garl-mob-accordion-btn" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mob-learning">
+              <i class="bi bi-mortarboard me-2"></i>{% trans "Learning" %}
+            </button>
+          </h2>
+          <div id="mob-learning" class="accordion-collapse collapse" data-bs-parent="#mobileNavAccordion">
+            <div class="accordion-body garl-mob-submenu">
+              <a href="{% url 'learning:home' %}"><i class="bi bi-house-door me-2"></i>{% trans "Learning Center" %}</a>
+              <a href="{% url 'learning:course_list' %}"><i class="bi bi-play-circle me-2"></i>{% trans "Browse Courses" %}</a>
+              {% if user.is_authenticated %}
+              <a href="{% url 'learning:my_courses' %}"><i class="bi bi-collection-play me-2"></i>{% trans "My Courses" %}</a>
+              <a href="{% url 'learning:certificates' %}"><i class="bi bi-patch-check me-2"></i>{% trans "Certificates" %}</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Health -->
+        <div class="accordion-item garl-mob-accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed garl-mob-accordion-btn" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mob-health">
+              <i class="bi bi-heart-pulse me-2"></i>{% trans "Health Science" %}
+            </button>
+          </h2>
+          <div id="mob-health" class="accordion-collapse collapse" data-bs-parent="#mobileNavAccordion">
+            <div class="accordion-body garl-mob-submenu">
+              <a href="{% url 'health_science:home' %}"><i class="bi bi-hospital me-2"></i>{% trans "Health Science Hub" %}</a>
+              <a href="{% url 'health_science:discipline' 'nursing' %}"><i class="bi bi-person-badge me-2"></i>{% trans "Nursing" %}</a>
+              <a href="{% url 'health_science:discipline' 'medicine' %}"><i class="bi bi-heart-pulse me-2"></i>{% trans "Medicine" %}</a>
+              <a href="{% url 'health_science:discipline' 'pharmacy' %}"><i class="bi bi-capsule me-2"></i>{% trans "Pharmacy" %}</a>
+              <a href="{% url 'health_science:discipline' 'public_health' %}"><i class="bi bi-shield-check me-2"></i>{% trans "Public Health" %}</a>
+              <a href="{% url 'health_science:resource_list' %}"><i class="bi bi-collection me-2"></i>{% trans "All Resources" %}</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Community -->
+        <div class="accordion-item garl-mob-accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed garl-mob-accordion-btn" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mob-community">
+              <i class="bi bi-people me-2"></i>{% trans "Community" %}
+            </button>
+          </h2>
+          <div id="mob-community" class="accordion-collapse collapse" data-bs-parent="#mobileNavAccordion">
+            <div class="accordion-body garl-mob-submenu">
+              <a href="{% url 'community:home' %}"><i class="bi bi-globe me-2"></i>{% trans "Directory" %}</a>
+              <a href="{% url 'community:institution_list' %}"><i class="bi bi-building me-2"></i>{% trans "Institutions" %}</a>
+              <a href="{% url 'community:researcher_list' %}"><i class="bi bi-person-workspace me-2"></i>{% trans "Researchers" %}</a>
+              <a href="{% url 'events:list' %}"><i class="bi bi-calendar-event me-2"></i>{% trans "Events" %}</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Support -->
+        <div class="accordion-item garl-mob-accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed garl-mob-accordion-btn" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mob-support">
+              <i class="bi bi-headset me-2"></i>{% trans "Support" %}
+            </button>
+          </h2>
+          <div id="mob-support" class="accordion-collapse collapse" data-bs-parent="#mobileNavAccordion">
+            <div class="accordion-body garl-mob-submenu">
+              <a href="{% url 'support:home' %}"><i class="bi bi-headset me-2"></i>{% trans "Help Center" %}</a>
+              <a href="{% url 'support:faq' %}"><i class="bi bi-question-circle me-2"></i>{% trans "FAQs" %}</a>
+              <a href="{% url 'support:create_ticket' %}"><i class="bi bi-ticket me-2"></i>{% trans "Open Ticket" %}</a>
+              <a href="{% url 'ai_support:chat' %}"><i class="bi bi-robot me-2"></i>{% trans "AI Assistant" %}</a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /accordion -->
+
+      <!-- Footer actions -->
+      <div class="p-3" style="border-top:1px solid rgba(255,255,255,.1);">
+        {% if user.is_authenticated %}
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="garl-avatar-sm garl-avatar-initials rounded-circle flex-shrink-0">
+            {{ user.first_name|first }}{{ user.last_name|first }}
+          </div>
+          <div class="min-width-0">
+            <div class="text-white small fw-medium text-truncate">{{ user.get_full_name }}</div>
+            <div style="font-size:.7rem;color:rgba(255,255,255,.5);">{{ user.get_role_display }}</div>
+          </div>
+        </div>
+        <div class="d-grid gap-2">
+          <a href="{% url 'dashboard:home' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-speedometer2 me-2"></i>{% trans "Dashboard" %}
+          </a>
+          <a href="{% url 'payments:my_purchases' %}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-bag-check me-2"></i>{% trans "My Purchases" %}
+          </a>
+          <a href="{% url 'payments:publisher_dashboard' %}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-graph-up-arrow me-2"></i>{% trans "My Earnings" %}
+          </a>
+          <form action="{% url 'accounts:logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+              <i class="bi bi-box-arrow-right me-2"></i>{% trans "Sign Out" %}
+            </button>
+          </form>
+        </div>
+        {% else %}
+        <div class="d-grid gap-2">
+          <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-person me-2"></i>{% trans "Sign In" %}
+          </a>
+          <a href="{% url 'accounts:register' %}" class="btn btn-garl-gold btn-sm">
+            <i class="bi bi-person-plus me-2"></i>{% trans "Register" %}
+          </a>
+        </div>
+        {% endif %}
+
+        <!-- Language selector (mobile) -->
+        <form action="{% url 'set_language' %}" method="post" class="mt-3">
+          {% csrf_token %}
+          <input name="next" type="hidden" value="{{ request.path }}" />
+          <select name="language" class="form-select form-select-sm garl-lang-select"
+                  onchange="this.form.submit()">
+            <option value="en"      {% if LANGUAGE_CODE == 'en'      %}selected{% endif %}>🌐 English</option>
+            <option value="fr"      {% if LANGUAGE_CODE == 'fr'      %}selected{% endif %}>🇫🇷 Français</option>
+            <option value="es"      {% if LANGUAGE_CODE == 'es'      %}selected{% endif %}>🇪🇸 Español</option>
+            <option value="ar"      {% if LANGUAGE_CODE == 'ar'      %}selected{% endif %}>🇸🇦 العربية</option>
+            <option value="zh-hans" {% if LANGUAGE_CODE == 'zh-hans' %}selected{% endif %}>🇨🇳 中文</option>
+            <option value="pt"      {% if LANGUAGE_CODE == 'pt'      %}selected{% endif %}>🇵🇹 Português</option>
+          </select>
+        </form>
+      </div>
+
+    </div><!-- /offcanvas-body -->
+  </div><!-- /offcanvas -->
+
+  <!-- ════════════════════════════════════════════ FLASH MESSAGES ══ -->
+  {% if messages %}
+  <div class="container-xl px-3 px-lg-4 pt-2" aria-live="polite" aria-atomic="true">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show rounded-3 mb-2" role="alert">
+      <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill{% elif message.tags == 'error' or message.tags == 'danger' %}bi-exclamation-triangle-fill{% elif message.tags == 'warning' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} me-2"></i>
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'Close' %}"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ══════════════════════════════════════════ BREADCRUMB SLOT ══ -->
+  {% block breadcrumb %}{% endblock %}
+
+  <!-- ════════════════════════════════════════════ MAIN CONTENT ══ -->
+  <main id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ══════════════════════════════════════════════════ FOOTER ══ -->
+  <footer class="garl-footer mt-5">
+    <div class="container-xl px-3 px-lg-4 py-5">
+      <div class="row g-4">
+
+        <!-- Brand -->
+        <div class="col-12 col-md-6 col-lg-3">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="garl-logo-icon garl-logo-icon--lg"><i class="bi bi-journal-richtext"></i></div>
+            <div>
+              <div class="garl-brand-title text-white fs-5">GARL</div>
+              <small class="text-muted" style="font-size:.72rem;">Global Academic Research Library</small>
+            </div>
+          </div>
+          <p class="text-muted small">{% trans "A centralized global academic ecosystem for research, learning, publishing, and innovation." %}</p>
+          {% if site_settings and site_settings.about_text %}
+          <p class="text-muted small">{{ site_settings.about_text }}</p>
+          {% endif %}
+          <div class="d-flex gap-3 mt-3 flex-wrap">
+            <a href="{% if site_settings %}{{ site_settings.social_twitter|default:'#' }}{% else %}#{% endif %}" class="garl-social-link" aria-label="Twitter / X"><i class="bi bi-twitter-x fs-5"></i></a>
+            <a href="{% if site_settings %}{{ site_settings.social_linkedin|default:'#' }}{% else %}#{% endif %}" class="garl-social-link" aria-label="LinkedIn"><i class="bi bi-linkedin fs-5"></i></a>
+            <a href="{% if site_settings %}{{ site_settings.social_facebook|default:'#' }}{% else %}#{% endif %}" class="garl-social-link" aria-label="Facebook"><i class="bi bi-facebook fs-5"></i></a>
+            <a href="{% if site_settings %}{{ site_settings.social_youtube|default:'#' }}{% else %}#{% endif %}" class="garl-social-link" aria-label="YouTube"><i class="bi bi-youtube fs-5"></i></a>
+          </div>
+        </div>
+
+        <!-- Research & Publishing -->
+        <div class="col-6 col-md-3 col-lg-2">
+          <h6 class="garl-footer-heading">{% trans "Research" %}</h6>
+          <ul class="list-unstyled garl-footer-links">
+            <li><a href="{% url 'research:paper_list' %}">{% trans "Papers" %}</a></li>
+            <li><a href="{% url 'research:project_list' %}">{% trans "Projects" %}</a></li>
+            <li><a href="{% url 'library:home' %}">{% trans "Library" %}</a></li>
+            <li><a href="{% url 'community:researcher_list' %}">{% trans "Researchers" %}</a></li>
+          </ul>
+          <h6 class="garl-footer-heading mt-3">{% trans "Publishing" %}</h6>
+          <ul class="list-unstyled garl-footer-links">
+            <li><a href="{% url 'publishing:book_list' %}">{% trans "Books" %}</a></li>
+            <li><a href="{% url 'publishing:journal_list' %}">{% trans "Journals" %}</a></li>
+            <li><a href="{% url 'publishing:submit' %}">{% trans "Submit" %}</a></li>
+          </ul>
+        </div>
+
+        <!-- Learning & Innovation -->
+        <div class="col-6 col-md-3 col-lg-2">
+          <h6 class="garl-footer-heading">{% trans "Learning" %}</h6>
+          <ul class="list-unstyled garl-footer-links">
+            <li><a href="{% url 'learning:course_list' %}">{% trans "Courses" %}</a></li>
+            <li><a href="{% url 'learning:certificates' %}">{% trans "Certificates" %}</a></li>
+          </ul>
+          <h6 class="garl-footer-heading mt-3">{% trans "Innovation" %}</h6>
+          <ul class="list-unstyled garl-footer-links">
+            <li><a href="{% url 'innovation:project_list' %}">{% trans "Projects" %}</a></li>
+            <li><a href="{% url 'innovation:submit' %}">{% trans "Submit" %}</a></li>
+          </ul>
+          <h6 class="garl-footer-heading mt-3">{% trans "Health" %}</h6>
+          <ul class="list-unstyled garl-footer-links">
+            <li><a href="{% url 'health_science:discipline' 'nursing' %}">{% trans "Nursing" %}</a></li>
+            <li><a href="{% url 'health_science:discipline' 'medicine' %}">{% trans "Medicine" %}</a></li>
+            <li><a href="{% url 'health_science:discipline' 'pharmacy' %}">{% trans "Pharmacy" %}</a></li>
+          </ul>
+        </div>
+
+        <!-- Community & Support -->
+        <div class="col-6 col-md-3 col-lg-2">
+          <h6 class="garl-footer-heading">{% trans "Community" %}</h6>
+          <ul class="list-unstyled garl-footer-links">
+            <li><a href="{% url 'community:institution_list' %}">{% trans "Institutions" %}</a></li>
+            <li><a href="{% url 'community:researcher_list' %}">{% trans "Researchers" %}</a></li>
+            <li><a href="{% url 'events:list' %}">{% trans "Events" %}</a></li>
+          </ul>
+          <h6 class="garl-footer-heading mt-3">{% trans "Support" %}</h6>
+          <ul class="list-unstyled garl-footer-links">
+            <li><a href="{% url 'support:home' %}">{% trans "Help Center" %}</a></li>
+            <li><a href="{% url 'support:faq' %}">{% trans "FAQs" %}</a></li>
+            <li><a href="{% url 'support:create_ticket' %}">{% trans "Contact" %}</a></li>
+            <li><a href="{% url 'ai_support:chat' %}">{% trans "AI Assistant" %}</a></li>
+          </ul>
+        </div>
+
+        <!-- Newsletter -->
+        <div class="col-12 col-md-6 col-lg-3">
+          <h6 class="garl-footer-heading">{% trans "Stay Updated" %}</h6>
+          <p class="text-muted small">{% trans "Subscribe for latest research, courses and news." %}</p>
+          <form class="garl-newsletter-form" onsubmit="return false;">
+            <div class="input-group input-group-sm">
+              <input type="email" class="form-control"
+                     placeholder="{% trans 'Your email' %}" aria-label="Email" />
+              <button class="btn btn-garl-gold" type="submit">{% trans "Subscribe" %}</button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      <hr class="garl-footer-divider mt-5" />
+
+      <div class="row align-items-center g-2">
+        <div class="col-12 col-md-6 text-muted small text-center text-md-start">
+          &copy; {% now "Y" %} {{ GARL_SITE_NAME }}. {% trans "All rights reserved." %}
+          &nbsp;|&nbsp; GARL v{{ GARL_VERSION }}
+        </div>
+        <div class="col-12 col-md-6 text-center text-md-end">
+          <a href="#" class="garl-footer-legal">{% trans "Privacy" %}</a>
+          <a href="#" class="garl-footer-legal">{% trans "Terms" %}</a>
+          <a href="#" class="garl-footer-legal">{% trans "Accessibility" %}</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS bundle (includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- GARL JS -->
+  <script src="{% static 'js/garl.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

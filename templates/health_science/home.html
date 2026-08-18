@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Health Science Hub" %}{% endblock %}
+{% block content %}
+<div class="garl-module-hero garl-module-hero--health">
+  <div class="container-fluid px-4 py-5">
+    <h1 class="display-5 fw-bold text-white mb-3"><i class="bi bi-heart-pulse me-3 garl-text-gold"></i>{% trans "Health Science Hub" %}</h1>
+    <p class="lead text-white-50 mb-2">{% trans "Organized academic resources for health science students and professionals." %}</p>
+    <div class="alert alert-warning d-inline-flex align-items-center mt-3 mb-0 p-2 px-3" style="font-size:.85rem;">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {% trans "Educational content only. Not a substitute for professional medical advice." %}
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 py-5">
+  <!-- Disciplines Grid -->
+  <h2 class="garl-section-title mb-4">{% trans "Health Science Disciplines" %}</h2>
+  <div class="row g-4 mb-5">
+    {% for disc in disciplines %}
+    <div class="col-lg-3 col-md-4 col-sm-6">
+      <a href="{% url 'health_science:discipline' disc.key %}" class="garl-center-card garl-center-card--health d-block text-decoration-none">
+        <div class="garl-center-icon">
+          {% if disc.key == 'nursing' %}<i class="bi bi-person-badge"></i>
+          {% elif disc.key == 'medicine' %}<i class="bi bi-heart-pulse"></i>
+          {% elif disc.key == 'midwifery' %}<i class="bi bi-person-hearts"></i>
+          {% elif disc.key == 'pharmacy' %}<i class="bi bi-capsule"></i>
+          {% elif disc.key == 'dentistry' %}<i class="bi bi-emoji-smile"></i>
+          {% elif disc.key == 'public_health' %}<i class="bi bi-shield-check"></i>
+          {% elif disc.key == 'biomedical' %}<i class="bi bi-flask"></i>
+          {% else %}<i class="bi bi-clipboard2-pulse"></i>{% endif %}
+        </div>
+        <h5 class="garl-center-title">{{ disc.label }}</h5>
+        <p class="garl-center-desc small">{% trans "Access textbooks, research papers, guidelines and educational resources." %}</p>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Recent Resources -->
+  {% if recent %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-collection me-2 garl-text-gold"></i>{% trans "Recent Resources" %}</h2>
+    <a href="{% url 'health_science:resource_list' %}" class="btn btn-outline-danger btn-sm">{% trans "All Resources" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-3">
+    {% for res in recent %}
+    <div class="col-lg-4 col-md-6">
+      <div class="garl-card p-3 h-100">
+        <div class="d-flex gap-2 mb-2 flex-wrap">
+          {% if res.category %}<span class="badge bg-danger-subtle text-danger-emphasis">{{ res.category.get_discipline_display }}</span>{% endif %}
+          <span class="badge bg-secondary">{{ res.get_resource_type_display }}</span>
+        </div>
+        <h6 class="garl-clamp-2 mb-2"><a href="{% url 'health_science:resource_detail' res.slug %}" class="garl-link-dark">{{ res.title }}</a></h6>
+        <p class="small text-muted garl-clamp-2">{{ res.description|truncatewords:20 }}</p>
+        {% if res.author %}<small class="text-muted"><i class="bi bi-person me-1"></i>{{ res.author }}</small>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

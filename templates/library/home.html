@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Library" %}{% endblock %}
+{% block content %}
+<div class="garl-module-hero" style="background:linear-gradient(135deg,#0d1b2a,#1a2b3c);">
+  <div class="container-fluid px-4 py-5">
+    <h1 class="display-5 fw-bold text-white mb-3"><i class="bi bi-collection me-3 garl-text-gold"></i>{% trans "Digital Library" %}</h1>
+    <p class="lead text-white-50 mb-4">{% trans "Access books, journals, theses, dissertations, datasets and multimedia resources." %}</p>
+    <form action="{% url 'library:resource_list' %}" method="get" class="d-flex gap-2" style="max-width:600px;">
+      <input type="search" name="q" class="form-control form-control-lg garl-hero-search-input" placeholder="{% trans 'Search library resources...' %}" />
+      <button type="submit" class="btn btn-garl-gold btn-lg px-4"><i class="bi bi-search"></i></button>
+    </form>
+  </div>
+</div>
+<div class="container-fluid px-4 py-5">
+  {% if collections %}
+  <h2 class="garl-section-title mb-4">{% trans "Collections" %}</h2>
+  <div class="row g-3 mb-5">
+    {% for col in collections %}
+    <div class="col-md-3 col-sm-4 col-6">
+      <a href="{% url 'library:resource_list' %}?collection={{ col.pk }}" class="garl-category-pill d-block text-center">
+        <i class="bi bi-folder2 d-block fs-4 mb-1"></i>{{ col.name }}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Resource types -->
+  <h2 class="garl-section-title mb-4">{% trans "Browse by Type" %}</h2>
+  <div class="row g-3 mb-5">
+    {% for val, label in types %}
+    <div class="col-md-2 col-sm-4 col-6">
+      <a href="{% url 'library:resource_list' %}?type={{ val }}" class="garl-quick-action garl-quick-action--primary text-center">
+        <div class="garl-quick-action-icon">
+          <i class="bi {% if val == 'book' %}bi-book{% elif val == 'journal' %}bi-journal-text{% elif val == 'thesis' %}bi-file-earmark-text{% elif val == 'dataset' %}bi-database{% else %}bi-collection{% endif %}"></i>
+        </div>
+        <span class="garl-quick-action-label">{{ label }}</span>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if recent %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-clock-history me-2 garl-text-gold"></i>{% trans "Recently Added" %}</h2>
+    <a href="{% url 'library:resource_list' %}" class="btn btn-outline-primary btn-sm">{% trans "Browse All" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-3">
+    {% for res in recent %}
+    <div class="col-lg-3 col-md-4 col-sm-6">
+      <div class="garl-card p-3 h-100">
+        <span class="badge bg-secondary mb-2">{{ res.get_resource_type_display }}</span>
+        <h6 class="garl-clamp-2 mb-2"><a href="{% url 'library:resource_detail' res.pk %}" class="garl-link-dark">{{ res.title }}</a></h6>
+        {% if res.author %}<small class="text-muted d-block"><i class="bi bi-person me-1"></i>{{ res.author|truncatechars:30 }}</small>{% endif %}
+        {% if res.year %}<small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ res.year }}</small>{% endif %}
+        <div class="mt-2">
+          <span class="badge {% if res.access_level == 'open' %}bg-success{% elif res.access_level == 'registered' %}bg-warning text-dark{% else %}bg-danger{% endif %}">
+            {{ res.get_access_level_display }}
+          </span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

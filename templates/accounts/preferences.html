@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% trans "Preferences" %}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="garl-card p-4">
+        <h4 class="mb-4">{% trans "Preferences" %}</h4>
+        <form method="post">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            {% if field.widget_type == 'checkbox' %}
+            <div class="form-check">{{ field }}<label class="form-check-label">{{ field.label }}</label></div>
+            {% else %}
+            <label class="form-label">{{ field.label }}</label>{{ field }}
+            {% endif %}
+          </div>
+          {% endfor %}
+          <button type="submit" class="btn btn-garl-gold"><i class="bi bi-save me-1"></i>{% trans "Save Preferences" %}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load i18n humanize %}
+{% block title %}{% trans "Instructor Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="garl-welcome-banner mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <h4 class="text-white mb-1">{% trans "Instructor Dashboard" %}</h4>
+        <p class="text-white-50 mb-0">{{ request.user.get_full_name }} &mdash; {{ request.user.email }}</p>
+      </div>
+      <a href="{% url 'learning:course_list' %}" class="btn btn-sm btn-garl-gold">
+        <i class="bi bi-eye me-1"></i>{% trans "View All Courses" %}
+      </a>
+    </div>
+  </div>
+
+  <!-- Summary stat -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--blue">
+        <div class="garl-admin-stat-number">{{ courses.count }}</div>
+        <div class="garl-admin-stat-label">{% trans "My Courses" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--green">
+        <div class="garl-admin-stat-number">{{ total_students|intcomma }}</div>
+        <div class="garl-admin-stat-label">{% trans "Total Students" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--gold">
+        <div class="garl-admin-stat-number">{{ courses|length }}</div>
+        <div class="garl-admin-stat-label">{% trans "Published Courses" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--teal">
+        <div class="garl-admin-stat-number">{{ enrollments|length }}</div>
+        <div class="garl-admin-stat-label">{% trans "Recent Enrollments" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Courses -->
+    <div class="col-lg-7">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-collection-play me-2 text-info"></i>{% trans "My Courses" %}</h6>
+        </div>
+        {% if courses %}
+        {% for course in courses %}
+        <div class="garl-list-item">
+          <div class="flex-grow-1">
+            <a href="{% url 'learning:course_detail' course.slug %}" class="garl-link-dark fw-medium d-block garl-clamp-1">{{ course.title }}</a>
+            <div class="d-flex gap-3 mt-1">
+              <small class="text-muted"><i class="bi bi-people me-1"></i>{{ course.enrollment_count }} {% trans "students" %}</small>
+              <span class="badge garl-badge-level-{{ course.level }}">{{ course.get_level_display }}</span>
+              {% if course.is_published %}<span class="badge bg-success">{% trans "Published" %}</span>{% else %}<span class="badge bg-secondary">{% trans "Draft" %}</span>{% endif %}
+              {% if course.has_certificate %}<span class="badge bg-warning text-dark"><i class="bi bi-patch-check me-1"></i>{% trans "Cert" %}</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-4">
+          <p class="text-muted">{% trans "You haven't created any courses yet." %}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recent Enrollments -->
+    <div class="col-lg-5">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-person-check me-2 text-success"></i>{% trans "Recent Enrollments" %}</h6>
+        </div>
+        {% if enrollments %}
+        {% for enr in enrollments %}
+        <div class="garl-list-item">
+          <div class="garl-avatar-sm garl-avatar-initials rounded-circle flex-shrink-0">{{ enr.student.first_name|first }}{{ enr.student.last_name|first }}</div>
+          <div class="flex-grow-1">
+            <div class="small fw-medium">{{ enr.student.get_full_name }}</div>
+            <small class="text-muted garl-clamp-1">{{ enr.course.title }}</small>
+          </div>
+          <div class="text-end flex-shrink-0">
+            <div class="progress" style="width:60px;height:6px;" role="progressbar" aria-valuenow="{{ enr.progress }}" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-info" style="width:{{ enr.progress }}%;"></div>
+            </div>
+            <small class="text-muted">{{ enr.progress }}%</small>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-4"><p class="text-muted small">{% trans "No enrollments yet." %}</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

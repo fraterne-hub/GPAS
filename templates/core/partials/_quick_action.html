@@ -1,0 +1,9 @@
+{% load i18n %}
+<div class="col-6 col-sm-4 col-md-3 col-lg-auto">
+  <a href="{% url url %}" class="garl-quick-action garl-quick-action--{{ color }}">
+    <div class="garl-quick-action-icon">
+      <i class="bi {{ icon }}"></i>
+    </div>
+    <span class="garl-quick-action-label">{% trans label %}</span>
+  </a>
+</div>

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Support Center" %}{% endblock %}
+{% block content %}
+<!-- Hero -->
+<div class="garl-module-hero" style="background:linear-gradient(135deg,#0d1b2a,#243447);">
+  <div class="container-fluid px-4 py-5">
+    <h1 class="display-5 fw-bold text-white mb-3"><i class="bi bi-headset me-3 garl-text-gold"></i>{% trans "Support Center" %}</h1>
+    <p class="lead text-white-50 mb-4">{% trans "Find answers, submit tickets, or contact our team for help." %}</p>
+    <div class="d-flex flex-wrap gap-3">
+      <a href="{% url 'support:create_ticket' %}" class="btn btn-garl-gold btn-lg"><i class="bi bi-ticket me-2"></i>{% trans "Open Support Ticket" %}</a>
+      <a href="{% url 'support:faq' %}" class="btn btn-outline-light btn-lg"><i class="bi bi-question-circle me-2"></i>{% trans "Browse FAQs" %}</a>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 py-5">
+  <!-- Quick help cards -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-3 col-sm-6">
+      <div class="garl-card p-4 text-center h-100">
+        <i class="bi bi-person-circle fs-2 text-primary mb-3 d-block"></i>
+        <h6>{% trans "Account Help" %}</h6>
+        <p class="text-muted small">{% trans "Registration, login, password, profile settings." %}</p>
+        <a href="{% url 'support:create_ticket' %}" class="btn btn-sm btn-outline-primary">{% trans "Get Help" %}</a>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="garl-card p-4 text-center h-100">
+        <i class="bi bi-journals fs-2 text-warning mb-3 d-block"></i>
+        <h6>{% trans "Publishing Help" %}</h6>
+        <p class="text-muted small">{% trans "Submission process, peer review, publication." %}</p>
+        <a href="{% url 'support:create_ticket' %}" class="btn btn-sm btn-outline-warning">{% trans "Get Help" %}</a>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="garl-card p-4 text-center h-100">
+        <i class="bi bi-wrench-adjustable fs-2 text-danger mb-3 d-block"></i>
+        <h6>{% trans "Technical Support" %}</h6>
+        <p class="text-muted small">{% trans "Errors, file uploads, browser issues." %}</p>
+        <a href="{% url 'support:create_ticket' %}" class="btn btn-sm btn-outline-danger">{% trans "Get Help" %}</a>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="garl-card p-4 text-center h-100">
+        <i class="bi bi-search fs-2 text-info mb-3 d-block"></i>
+        <h6>{% trans "Research Help" %}</h6>
+        <p class="text-muted small">{% trans "Finding resources, citations, databases." %}</p>
+        <a href="{% url 'support:create_ticket' %}" class="btn btn-sm btn-outline-info">{% trans "Get Help" %}</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQs preview -->
+  {% if faq_categories %}
+  <h2 class="garl-section-title mb-4"><i class="bi bi-question-circle me-2 garl-text-gold"></i>{% trans "Frequently Asked Questions" %}</h2>
+  <div class="row g-4 mb-4">
+    {% for cat in faq_categories %}
+    {% if cat.faqs.all %}
+    <div class="col-lg-6">
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3 text-primary">{{ cat.name }}</h6>
+        <div class="accordion accordion-flush" id="faqCat{{ cat.pk }}">
+          {% for faq in cat.faqs.all|slice:":3" %}
+          <div class="accordion-item border-0 border-bottom">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed py-2 px-0 bg-transparent shadow-none"
+                      type="button" data-bs-toggle="collapse"
+                      data-bs-target="#faq{{ faq.pk }}" aria-expanded="false">
+                <span class="small fw-medium">{{ faq.question }}</span>
+              </button>
+            </h2>
+            <div id="faq{{ faq.pk }}" class="accordion-collapse collapse">
+              <div class="accordion-body px-0 py-2 text-muted small">{{ faq.answer }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  <div class="text-center">
+    <a href="{% url 'support:faq' %}" class="btn btn-outline-primary"><i class="bi bi-arrow-right me-2"></i>{% trans "View All FAQs" %}</a>
+  </div>
+  {% endif %}
+
+  <!-- My tickets shortcut -->
+  {% if user.is_authenticated %}
+  <div class="text-center mt-5">
+    <h5 class="mb-3">{% trans "Have an existing ticket?" %}</h5>
+    <a href="{% url 'support:my_tickets' %}" class="btn btn-outline-secondary"><i class="bi bi-clock-history me-2"></i>{% trans "View My Tickets" %}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

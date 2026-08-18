@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load i18n garl_tags %}
+{% block title %}{% trans "Author Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="garl-welcome-banner mb-4">
+    <h4 class="text-white mb-1">{% trans "Author Dashboard" %}</h4>
+    <p class="text-white-50 mb-0">{{ request.user.get_full_name }}</p>
+  </div>
+
+  <!-- Status summary -->
+  <div class="row g-3 mb-4">
+    {% for status, label in status_choices %}
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-stat-cycle-{{ forloop.counter0 }}">
+        <div class="garl-admin-stat-number">{{ pubs_by_status|get_item:status|default:"0" }}</div>
+        <div class="garl-admin-stat-label">{{ label }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h5>{% trans "Recent Submissions" %}</h5>
+    <a href="{% url 'publishing:submit' %}" class="btn btn-garl-gold btn-sm"><i class="bi bi-plus me-1"></i>{% trans "New Submission" %}</a>
+  </div>
+  <div class="garl-card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Title" %}</th><th>{% trans "Type" %}</th><th>{% trans "Status" %}</th><th>{% trans "Date" %}</th><th></th></tr></thead>
+        <tbody>
+          {% for pub in recent_pubs %}
+          <tr>
+            <td class="garl-clamp-1" style="max-width:300px;">{{ pub.title }}</td>
+            <td>{% if pub.pub_type %}{{ pub.pub_type.name }}{% else %}&mdash;{% endif %}</td>
+            <td><span class="badge garl-status-badge garl-status-{{ pub.status }}">{{ pub.get_status_display }}</span></td>
+            <td><small class="text-muted">{{ pub.created_at|date:"M d, Y" }}</small></td>
+            <td>{% if pub.status == 'published' %}<a href="{% url 'publishing:publication_detail' pub.slug %}" class="btn btn-xs btn-outline-primary">{% trans "View" %}</a>{% endif %}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-muted text-center py-4">{% trans "No submissions yet." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

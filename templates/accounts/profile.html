@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "My Profile" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row g-4">
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <div class="garl-card text-center p-4">
+        {% if profile.avatar %}
+        <img src="{{ profile.avatar.url }}" alt="{{ user.get_full_name }}"
+             class="rounded-circle mb-3" width="100" height="100" style="object-fit:cover;" />
+        {% else %}
+        <div class="garl-avatar-lg garl-avatar-initials rounded-circle mx-auto mb-3">
+          {{ user.first_name|first }}{{ user.last_name|first }}
+        </div>
+        {% endif %}
+        <h5 class="mb-1">{{ user.get_full_name }}</h5>
+        <p class="text-muted small">{{ user.get_role_display }}</p>
+        {% if profile.headline %}
+        <p class="small">{{ profile.headline }}</p>
+        {% endif %}
+
+        <!-- Completion -->
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small text-muted mb-1">
+            <span>{% trans "Profile completion" %}</span>
+            <span>{{ profile.completion_percentage }}%</span>
+          </div>
+          <div class="progress" style="height:6px;" role="progressbar"
+               aria-valuenow="{{ profile.completion_percentage }}" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar bg-warning" style="width:{{ profile.completion_percentage }}%"></div>
+          </div>
+        </div>
+
+        <a href="{% url 'accounts:edit_profile' %}" class="btn btn-garl-gold w-100 btn-sm">
+          <i class="bi bi-pencil me-1"></i>{% trans "Edit Profile" %}
+        </a>
+      </div>
+    </div>
+
+    <!-- Main profile -->
+    <div class="col-lg-9">
+      <div class="garl-card p-4">
+        <h4 class="mb-4">{% trans "Profile Information" %}</h4>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Email" %}</p>
+            <p>{{ user.email }}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Username" %}</p>
+            <p>{{ user.username }}</p>
+          </div>
+          {% if profile.institution %}
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Institution" %}</p>
+            <p>{{ profile.institution }}</p>
+          </div>
+          {% endif %}
+          {% if profile.department %}
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Department" %}</p>
+            <p>{{ profile.department }}</p>
+          </div>
+          {% endif %}
+          {% if profile.field_of_study %}
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Field of Study" %}</p>
+            <p>{{ profile.field_of_study }}</p>
+          </div>
+          {% endif %}
+          {% if profile.country %}
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Country" %}</p>
+            <p>{{ profile.country }}</p>
+          </div>
+          {% endif %}
+          {% if profile.bio %}
+          <div class="col-12">
+            <p class="text-muted small mb-0">{% trans "Biography" %}</p>
+            <p>{{ profile.bio }}</p>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if profile.orcid or profile.linkedin or profile.researchgate %}
+        <hr />
+        <h6>{% trans "Academic Links" %}</h6>
+        <div class="d-flex flex-wrap gap-3">
+          {% if profile.orcid %}<a href="https://orcid.org/{{ profile.orcid }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success"><i class="bi bi-person-badge me-1"></i>ORCID</a>{% endif %}
+          {% if profile.linkedin %}<a href="{{ profile.linkedin }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="bi bi-linkedin me-1"></i>LinkedIn</a>{% endif %}
+          {% if profile.researchgate %}<a href="{{ profile.researchgate }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info"><i class="bi bi-globe me-1"></i>ResearchGate</a>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <a href="{% url 'dashboard:home' %}" class="btn btn-primary"><i class="bi bi-speedometer2 me-1"></i>{% trans "Dashboard" %}</a>
+        <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-secondary"><i class="bi bi-lock me-1"></i>{% trans "Change Password" %}</a>
+        <a href="{% url 'accounts:preferences' %}" class="btn btn-outline-secondary"><i class="bi bi-gear me-1"></i>{% trans "Preferences" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

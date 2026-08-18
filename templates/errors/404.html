@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}404 — {% trans "Page Not Found" %}{% endblock %}
+{% block content %}
+<div class="container text-center py-5">
+  <div class="garl-error-page">
+    <div class="garl-error-code">404</div>
+    <h2 class="garl-error-title">{% trans "Page Not Found" %}</h2>
+    <p class="garl-error-desc text-muted">{% trans "The page you are looking for does not exist or has been moved." %}</p>
+    <div class="d-flex justify-content-center gap-3 mt-4">
+      <a href="{% url 'core:home' %}" class="btn btn-garl-gold"><i class="bi bi-house me-2"></i>{% trans "Go Home" %}</a>
+      <a href="{% url 'search:results' %}" class="btn btn-outline-secondary"><i class="bi bi-search me-2"></i>{% trans "Search" %}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

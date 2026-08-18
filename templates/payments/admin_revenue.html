@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load i18n humanize %}
+{% block title %}{% trans "Platform Revenue Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <h3 class="mb-4"><i class="bi bi-graph-up-arrow me-2 garl-text-gold"></i>{% trans "Platform Revenue Dashboard" %}</h3>
+
+  <!-- Platform stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--gold">
+        <div class="garl-admin-stat-number">USD {{ platform_rev.total_platform_cut|floatformat:2 }}</div>
+        <div class="garl-admin-stat-label">{% trans "Platform Revenue (40%)" %}</div>
+        <div class="garl-admin-stat-sub">{% trans "Your earnings" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--blue">
+        <div class="garl-admin-stat-number">USD {{ platform_rev.total_gross|floatformat:2 }}</div>
+        <div class="garl-admin-stat-label">{% trans "Total Gross Revenue" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--green">
+        <div class="garl-admin-stat-number">{{ platform_rev.total_transactions|intcomma }}</div>
+        <div class="garl-admin-stat-label">{% trans "Completed Transactions" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--teal">
+        <div class="garl-admin-stat-number">{{ pending_payouts|length }}</div>
+        <div class="garl-admin-stat-label">{% trans "Pending Payout Requests" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue split reminder -->
+  <div class="garl-card p-3 mb-4 d-flex align-items-center gap-4">
+    <div class="text-center" style="min-width:100px;">
+      <div class="fs-3 fw-bold garl-text-gold">40%</div>
+      <div class="small text-muted">{% trans "Platform" %}</div>
+    </div>
+    <div class="progress flex-grow-1" style="height:24px;border-radius:6px;">
+      <div class="progress-bar" style="width:40%;background:var(--garl-gold);" role="progressbar">USD {{ platform_rev.total_platform_cut|floatformat:0 }}</div>
+      <div class="progress-bar bg-success" style="width:60%;" role="progressbar">USD {{ platform_rev.total_publisher_cut|floatformat:0 }}</div>
+    </div>
+    <div class="text-center" style="min-width:100px;">
+      <div class="fs-3 fw-bold text-success">60%</div>
+      <div class="small text-muted">{% trans "Publishers" %}</div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Pending payouts -->
+    {% if pending_payouts %}
+    <div class="col-12">
+      <div class="garl-admin-card">
+        <div class="garl-admin-card-header">
+          <h6 class="mb-0 text-warning"><i class="bi bi-hourglass-split me-2"></i>{% trans "Pending Payout Requests" %}</h6>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead><tr><th>{% trans "Publisher" %}</th><th>{% trans "Amount" %}</th><th>{% trans "Payment Details" %}</th><th>{% trans "Requested" %}</th><th>{% trans "Actions" %}</th></tr></thead>
+            <tbody>
+              {% for payout in pending_payouts %}
+              <tr>
+                <td>{{ payout.publisher.get_full_name }}<br><small class="text-muted">{{ payout.publisher.email }}</small></td>
+                <td class="fw-bold">{{ payout.currency }} {{ payout.amount|floatformat:2 }}</td>
+                <td><small>{{ payout.payment_details|truncatechars:60 }}</small></td>
+                <td><small class="text-muted">{{ payout.requested_at|date:"M d, Y" }}</small></td>
+                <td>
+                  <form method="post" action="{% url 'payments:approve_payout' payout.pk %}" class="d-inline"
+                        data-confirm="{% trans 'Confirm payment of' %} {{ payout.currency }} {{ payout.amount }}?">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-xs btn-success">
+                      <i class="bi bi-check-circle me-1"></i>{% trans "Pay" %}
+                    </button>
+                  </form>
+                  <button type="button" class="btn btn-xs btn-outline-danger ms-1"
+                          data-bs-toggle="modal" data-bs-target="#rejectModal{{ payout.pk }}">
+                    <i class="bi bi-x-circle me-1"></i>{% trans "Reject" %}
+                  </button>
+                  <!-- Reject modal -->
+                  <div class="modal fade" id="rejectModal{{ payout.pk }}" tabindex="-1">
+                    <div class="modal-dialog"><div class="modal-content">
+                      <div class="modal-header"><h5 class="modal-title">{% trans "Reject Payout" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                      <form method="post" action="{% url 'payments:reject_payout' payout.pk %}">
+                        {% csrf_token %}
+                        <div class="modal-body"><textarea name="reason" class="form-control" rows="3" placeholder="{% trans 'Reason for rejection' %}"></textarea></div>
+                        <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button><button type="submit" class="btn btn-danger">{% trans "Reject" %}</button></div>
+                      </form>
+                    </div></div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Revenue by type -->
+    <div class="col-lg-5">
+      <div class="garl-admin-card">
+        <div class="garl-admin-card-header"><h6 class="mb-0">{% trans "Revenue by Content Type" %}</h6></div>
+        <div class="p-3">
+          {% for row in by_type %}
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+              <div class="fw-medium">{{ row.content_price__content_type|title }}</div>
+              <small class="text-muted">{{ row.count }} {% trans "transactions" %}</small>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold garl-text-gold">USD {{ row.platform|floatformat:2 }}</div>
+              <small class="text-muted">{% trans "your share (40%)" %}</small>
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-muted text-center py-2">{% trans "No revenue data yet." %}</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Top publishers -->
+    <div class="col-lg-7">
+      <div class="garl-admin-card">
+        <div class="garl-admin-card-header"><h6 class="mb-0">{% trans "Top Publishers" %}</h6></div>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>{% trans "Publisher" %}</th><th>{% trans "Sales" %}</th><th>{% trans "Gross" %}</th><th>{% trans "Publisher Earned (60%)" %}</th><th>{% trans "Pending" %}</th></tr></thead>
+            <tbody>
+              {% for e in top_publishers %}
+              <tr>
+                <td>{{ e.publisher.get_full_name|default:e.publisher.username }}</td>
+                <td>{{ e.total_sales }}</td>
+                <td>USD {{ e.total_revenue|floatformat:2 }}</td>
+                <td class="text-success fw-bold">USD {{ e.publisher_paid|floatformat:2 }}</td>
+                <td>{% if e.pending_payout > 0 %}<span class="text-warning fw-bold">USD {{ e.pending_payout|floatformat:2 }}</span>{% else %}&mdash;{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-muted text-center py-3">{% trans "No publisher data yet." %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="col-12">
+      <div class="garl-admin-card">
+        <div class="garl-admin-card-header"><h6 class="mb-0">{% trans "Recent Transactions" %}</h6></div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead><tr><th>{% trans "Txn ID" %}</th><th>{% trans "Buyer" %}</th><th>{% trans "Content" %}</th><th>{% trans "Total" %}</th><th>{% trans "Platform (40%)" %}</th><th>{% trans "Publisher (60%)" %}</th><th>{% trans "Date" %}</th></tr></thead>
+            <tbody>
+              {% for p in recent_purchases %}
+              <tr>
+                <td><code class="small">{{ p.transaction_id|slice:":12" }}…</code></td>
+                <td><small>{{ p.buyer.get_full_name|default:p.buyer.username }}</small></td>
+                <td><small class="text-muted">{{ p.content_price.get_content_type_display }} #{{ p.content_price.object_id }}</small></td>
+                <td>{{ p.currency }} {{ p.amount|floatformat:2 }}</td>
+                <td class="garl-text-gold fw-bold">{{ p.currency }} {{ p.platform_amount|floatformat:2 }}</td>
+                <td class="text-success">{{ p.currency }} {{ p.publisher_amount|floatformat:2 }}</td>
+                <td><small class="text-muted">{{ p.completed_at|date:"M d, Y" }}</small></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="7" class="text-muted text-center py-3">{% trans "No transactions yet." %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

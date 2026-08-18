@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Institutions" %}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'community:home' %}">{% trans "Community" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Institutions" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3><i class="bi bi-building me-2 garl-text-gold"></i>{% trans "Institutions Directory" %}</h3>
+  </div>
+  <form method="get" class="mb-4">
+    <div class="row g-2" style="max-width:700px;">
+      <div class="col-md-5"><input type="search" name="q" class="form-control" value="{{ q }}" placeholder="{% trans 'Search institutions...' %}" /></div>
+      <div class="col-md-4"><input type="text" name="country" class="form-control" value="{{ request.GET.country }}" placeholder="{% trans 'Filter by country...' %}" /></div>
+      <div class="col-md-3"><button type="submit" class="btn btn-garl-gold w-100">{% trans "Search" %}</button></div>
+    </div>
+  </form>
+  {% if page_obj %}
+  <div class="row g-4">
+    {% for inst in page_obj %}
+    <div class="col-lg-3 col-md-4 col-sm-6">
+      <div class="garl-card p-3 h-100 text-center">
+        {% if inst.logo %}<img src="{{ inst.logo.url }}" alt="{{ inst.name }}" style="height:64px;object-fit:contain;" class="mb-3" />
+        {% else %}<div class="garl-avatar-lg garl-avatar-initials rounded-circle mx-auto mb-3" style="font-size:1.5rem;">{{ inst.name|first }}</div>{% endif %}
+        <h6 class="garl-clamp-2 mb-1"><a href="{% url 'community:institution_detail' inst.slug %}" class="garl-link-dark">{{ inst.name }}</a></h6>
+        {% if inst.institution_type %}<small class="text-muted d-block">{{ inst.institution_type.name }}</small>{% endif %}
+        <small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ inst.city }}{% if inst.city and inst.country %}, {% endif %}{{ inst.country }}</small>
+        {% if inst.is_verified %}<div class="mt-2"><span class="badge bg-success-subtle text-success-emphasis"><i class="bi bi-patch-check me-1"></i>{% trans "Verified" %}</span></div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% if page_obj.has_other_pages %}
+  <nav class="mt-4"><ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+  </ul></nav>
+  {% endif %}
+  {% else %}
+  <div class="garl-empty-state text-center py-5"><i class="bi bi-building fs-1 text-muted mb-3 d-block"></i><h5>{% trans "No institutions found" %}</h5></div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Editor Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="garl-welcome-banner mb-4">
+    <h4 class="text-white mb-1">{% trans "Editor Dashboard" %}</h4>
+    <p class="text-white-50 mb-0">{{ request.user.get_full_name }}</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--blue">
+        <div class="garl-admin-stat-number">{{ stats.submitted }}</div>
+        <div class="garl-admin-stat-label">{% trans "New Submissions" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--gold">
+        <div class="garl-admin-stat-number">{{ stats.under_review }}</div>
+        <div class="garl-admin-stat-label">{% trans "Under Review" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--green">
+        <div class="garl-admin-stat-number">{{ stats.approved }}</div>
+        <div class="garl-admin-stat-label">{% trans "Approved" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--teal">
+        <div class="garl-admin-stat-number">{{ stats.published }}</div>
+        <div class="garl-admin-stat-label">{% trans "Published" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Submissions -->
+  <div class="garl-card">
+    <div class="garl-admin-card-header d-flex align-items-center justify-content-between">
+      <h6 class="mb-0"><i class="bi bi-hourglass-split me-2 text-warning"></i>{% trans "Pending Submissions" %}</h6>
+      <a href="{% url 'publishing:editor_dashboard' %}" class="btn btn-xs btn-outline-warning">{% trans "Full View" %}</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Title" %}</th><th>{% trans "Author" %}</th><th>{% trans "Status" %}</th><th>{% trans "Submitted" %}</th><th>{% trans "Actions" %}</th></tr></thead>
+        <tbody>
+          {% for sub in pending_subs %}
+          <tr>
+            <td class="garl-clamp-1" style="max-width:240px;">{{ sub.publication.title }}</td>
+            <td><small>{{ sub.submitted_by.get_full_name }}</small></td>
+            <td><span class="badge garl-status-badge garl-status-{{ sub.publication.status }}">{{ sub.publication.get_status_display }}</span></td>
+            <td><small class="text-muted">{{ sub.submitted_at|date:"M d, Y" }}</small></td>
+            <td>
+              <form method="post" action="{% url 'publishing:approve' sub.publication.pk %}" class="d-inline" data-confirm="{% trans 'Approve and publish?' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-xs btn-success"><i class="bi bi-check-circle me-1"></i>{% trans "Approve" %}</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-muted text-center py-4">{% trans "No pending submissions." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

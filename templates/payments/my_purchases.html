@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "My Purchases" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <h3 class="mb-4"><i class="bi bi-bag-check me-2 garl-text-gold"></i>{% trans "My Purchases" %}</h3>
+  {% if purchases %}
+  <div class="garl-card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Content" %}</th><th>{% trans "Type" %}</th><th>{% trans "Amount Paid" %}</th><th>{% trans "Date" %}</th><th>{% trans "Action" %}</th></tr></thead>
+        <tbody>
+          {% for p in purchases %}
+          <tr>
+            <td class="fw-medium">{{ p.content_title|default:p.transaction_id|truncatechars:50 }}</td>
+            <td><span class="badge bg-secondary">{{ p.content_price.get_content_type_display }}</span></td>
+            <td><strong>{{ p.currency }} {{ p.amount }}</strong></td>
+            <td><small class="text-muted">{{ p.completed_at|date:"M d, Y" }}</small></td>
+            <td>
+              <a href="{% url 'payments:download' p.content_price.content_type p.content_price.object_id p.transaction_id %}"
+                 class="btn btn-xs btn-garl-gold">
+                <i class="bi bi-download me-1"></i>{% trans "Download" %}
+              </a>
+              <a href="{% url 'payments:receipt' p.transaction_id %}" class="btn btn-xs btn-outline-secondary ms-1">
+                <i class="bi bi-receipt me-1"></i>{% trans "Receipt" %}
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="garl-empty-state text-center py-5">
+    <i class="bi bi-bag fs-1 text-muted mb-3 d-block"></i>
+    <h5>{% trans "No purchases yet" %}</h5>
+    <p class="text-muted">{% trans "Browse our books, journals and publications to find premium content." %}</p>
+    <a href="{% url 'publishing:publication_list' %}" class="btn btn-garl-gold mt-2">{% trans "Browse Publications" %}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

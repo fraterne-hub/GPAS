@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <div class="col-lg-3 col-md-4">
+      {% if book.cover %}
+      <img src="{{ book.cover.url }}" alt="{{ book.title }}" class="img-fluid rounded shadow" />
+      {% else %}
+      <div class="garl-card-img-placeholder rounded" style="height:300px;"><i class="bi bi-book-fill fs-1"></i></div>
+      {% endif %}
+      <div class="d-grid gap-2 mt-3">
+        {% if book.file %}
+        {% if book.is_free %}
+        <a href="{% url 'publishing:book_download' book.pk %}" class="btn btn-garl-gold">
+          <i class="bi bi-download me-2"></i>{% trans "Download Free" %}
+        </a>
+        {% elif user.is_authenticated %}
+          {% comment %}Check access via context — see book_detail view{% endcomment %}
+          {% if has_access %}
+          <a href="{% url 'payments:download' 'book' book.pk 'existing' %}" class="btn btn-success">
+            <i class="bi bi-download me-2"></i>{% trans "Download" %} {% trans "(Purchased)" %}
+          </a>
+          {% else %}
+          <a href="{% url 'payments:checkout' 'book' book.pk %}" class="btn btn-garl-gold">
+            <i class="bi bi-cart-check me-2"></i>{% trans "Buy to Download" %}
+            {% if book_price %}&nbsp; {{ book_price.currency }} {{ book_price.price }}{% endif %}
+          </a>
+          {% endif %}
+        {% else %}
+        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-garl-gold">
+          <i class="bi bi-lock me-2"></i>{% trans "Sign in to Purchase" %}
+        </a>
+        {% endif %}
+        {% endif %}
+        <button class="btn btn-outline-secondary" data-bookmark data-content-type="book" data-object-id="{{ book.pk }}">
+          <i class="bi bi-bookmark me-1"></i>{% trans "Bookmark" %}
+        </button>
+      </div>
+    </div>
+    <div class="col-lg-9 col-md-8">
+      <div class="garl-card p-4">
+        {% if book.is_free %}<span class="badge bg-success mb-2">{% trans "Free" %}</span>{% endif %}
+        <h2 class="mb-1">{{ book.title }}</h2>
+        {% if book.subtitle %}<h5 class="text-muted mb-3">{{ book.subtitle }}</h5>{% endif %}
+        <p>{{ book.description }}</p>
+        <hr />
+        <div class="row g-2">
+          {% if book.publisher %}<div class="col-md-4"><small class="text-muted">{% trans "Publisher" %}</small><div>{{ book.publisher }}</div></div>{% endif %}
+          {% if book.year %}<div class="col-md-2"><small class="text-muted">{% trans "Year" %}</small><div>{{ book.year }}</div></div>{% endif %}
+          {% if book.isbn %}<div class="col-md-4"><small class="text-muted">ISBN</small><div>{{ book.isbn }}</div></div>{% endif %}
+          {% if book.pages %}<div class="col-md-2"><small class="text-muted">{% trans "Pages" %}</small><div>{{ book.pages }}</div></div>{% endif %}
+          {% if book.language %}<div class="col-md-3"><small class="text-muted">{% trans "Language" %}</small><div>{{ book.language }}</div></div>{% endif %}
+        </div>
+        <div class="mt-3 text-muted small">
+          <i class="bi bi-eye me-1"></i>{{ book.view_count }} {% trans "views" %}
+          <i class="bi bi-download ms-3 me-1"></i>{{ book.download_count }} {% trans "downloads" %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

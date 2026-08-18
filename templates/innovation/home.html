@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Innovation Hub" %}{% endblock %}
+{% block content %}
+<div class="garl-module-hero garl-module-hero--innovation">
+  <div class="container-fluid px-4 py-5">
+    <h1 class="display-5 fw-bold text-white mb-3"><i class="bi bi-lightbulb me-3 garl-text-gold"></i>{% trans "Innovation Hub" %}</h1>
+    <p class="lead text-white-50 mb-4">{% trans "Discover student projects, prototypes, startups, patents and innovation challenges." %}</p>
+    <div class="d-flex flex-wrap gap-3">
+      <a href="{% url 'innovation:submit' %}" class="btn btn-garl-gold btn-lg"><i class="bi bi-plus-circle me-2"></i>{% trans "Submit Project" %}</a>
+      <a href="{% url 'innovation:project_list' %}" class="btn btn-outline-light btn-lg">{% trans "Browse Projects" %}</a>
+    </div>
+  </div>
+</div>
+<div class="container-fluid px-4 py-5">
+  {% if categories %}
+  <h2 class="garl-section-title mb-4">{% trans "Categories" %}</h2>
+  <div class="row g-3 mb-5">
+    {% for cat in categories %}
+    <div class="col-md-2 col-sm-4 col-6">
+      <a href="{% url 'innovation:project_list' %}?category={{ cat.pk }}" class="garl-category-pill text-center d-block">
+        {% if cat.icon %}<i class="bi {{ cat.icon }} d-block fs-4 mb-1"></i>{% endif %}
+        {{ cat.name }}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if featured %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-star me-2 garl-text-gold"></i>{% trans "Featured Innovations" %}</h2>
+    <a href="{% url 'innovation:project_list' %}" class="btn btn-outline-warning btn-sm">{% trans "View All" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-4">
+    {% for project in featured %}
+    <div class="col-lg-3 col-md-6">
+      <div class="garl-card h-100">
+        {% if project.cover_image %}<img src="{{ project.cover_image.url }}" class="card-img-top garl-card-img" alt="{{ project.title }}" loading="lazy" />
+        {% else %}<div class="garl-card-img-placeholder garl-card-img-placeholder--innovation"><i class="bi bi-lightbulb"></i></div>{% endif %}
+        <div class="card-body d-flex flex-column">
+          <span class="badge garl-badge-project mb-2">{{ project.get_project_type_display }}</span>
+          <h6 class="garl-clamp-2"><a href="{% url 'innovation:project_detail' project.slug %}" class="garl-link-dark">{{ project.title }}</a></h6>
+          <p class="small text-muted garl-clamp-2 mt-auto">{{ project.description|truncatewords:15 }}</p>
+          <div class="garl-card-meta mt-2">
+            <small class="text-muted"><i class="bi bi-hand-thumbs-up me-1"></i>{{ project.like_count }} &nbsp;<i class="bi bi-eye ms-2 me-1"></i>{{ project.view_count }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

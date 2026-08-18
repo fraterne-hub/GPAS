@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load i18n payment_tags %}
+
+{% block title %}{% trans "Books" %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'publishing:home' %}">{% trans "Publishing" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Books" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3><i class="bi bi-book me-2 garl-text-gold"></i>{% trans "Books" %}</h3>
+  </div>
+
+  <form method="get" class="mb-4">
+    <div class="input-group" style="max-width:500px;">
+      <input type="search" name="q" class="form-control" value="{{ q }}" placeholder="{% trans 'Search by title, author, ISBN...' %}" />
+      <button type="submit" class="btn btn-garl-gold"><i class="bi bi-search"></i></button>
+    </div>
+  </form>
+
+  {% if page_obj %}
+  <div class="row g-4">
+    {% for book in page_obj %}
+    <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+      <div class="garl-card h-100">
+        {% if book.cover %}
+        <img src="{{ book.cover.url }}" class="card-img-top garl-card-img" alt="{{ book.title }}" loading="lazy" style="height:220px;" />
+        {% else %}
+        <div class="garl-card-img-placeholder" style="height:220px;">
+          <i class="bi bi-book-fill"></i>
+        </div>
+        {% endif %}
+        <div class="card-body p-2">
+          {% content_price_badge 'book' book.pk %}
+          <h6 class="card-title garl-clamp-2 small mb-1 mt-1">
+            <a href="{% url 'publishing:book_detail' book.slug %}" class="garl-link-dark">{{ book.title }}</a>
+          </h6>
+          {% if book.year %}<small class="text-muted">{{ book.year }}</small>{% endif %}
+          <div class="mt-2">{% price_action_button 'book' book.pk 'btn-sm btn-garl-gold' %}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <nav class="mt-4"><ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+  </ul></nav>
+  {% endif %}
+
+  {% else %}
+  <div class="garl-empty-state text-center py-5">
+    <i class="bi bi-book fs-1 text-muted mb-3 d-block"></i>
+    <h5>{% trans "No books found" %}</h5>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Journals" %}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'publishing:home' %}">{% trans "Publishing" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Journals" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3><i class="bi bi-journal-text me-2 garl-text-gold"></i>{% trans "Journals" %}</h3>
+  </div>
+  <form method="get" class="mb-4"><div class="input-group" style="max-width:500px;">
+    <input type="search" name="q" class="form-control" value="{{ q }}" placeholder="{% trans 'Search journals...' %}" />
+    <button type="submit" class="btn btn-garl-gold"><i class="bi bi-search"></i></button>
+  </div></form>
+  {% if page_obj %}
+  <div class="row g-4">
+    {% for journal in page_obj %}
+    <div class="col-lg-4 col-md-6">
+      <div class="garl-card p-3 h-100">
+        <h6 class="mb-1"><a href="{% url 'publishing:journal_detail' journal.slug %}" class="garl-link-dark">{{ journal.title }}</a></h6>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          {% if journal.issn %}<small class="text-muted">ISSN: {{ journal.issn }}</small>{% endif %}
+          {% if journal.is_open_access %}<span class="badge bg-success-subtle text-success-emphasis small"><i class="bi bi-unlock-fill me-1"></i>{% trans "Open Access" %}</span>{% endif %}
+        </div>
+        {% if journal.description %}<p class="text-muted small garl-clamp-2 mt-2 mb-0">{{ journal.description|truncatewords:20 }}</p>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% if page_obj.has_other_pages %}
+  <nav class="mt-4"><ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+  </ul></nav>
+  {% endif %}
+  {% else %}
+  <div class="garl-empty-state text-center py-5"><i class="bi bi-journal-text fs-1 text-muted mb-3 d-block"></i><h5>{% trans "No journals found" %}</h5></div>
+  {% endif %}
+</div>
+{% endblock %}

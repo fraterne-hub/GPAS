@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Research Center" %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Research Center" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="garl-module-hero garl-module-hero--research">
+  <div class="container-fluid px-4 py-5">
+    <div class="row align-items-center">
+      <div class="col-lg-7">
+        <h1 class="display-5 fw-bold text-white mb-3">
+          <i class="bi bi-search me-3 garl-text-gold"></i>{% trans "Research Center" %}
+        </h1>
+        <p class="lead text-white-50 mb-4">{% trans "Discover research papers, datasets, projects and collaborate with researchers worldwide." %}</p>
+        <form action="{% url 'search:results' %}" method="get" class="d-flex gap-2">
+          <input type="hidden" name="type" value="papers" />
+          <input type="search" name="q" class="form-control form-control-lg garl-hero-search-input"
+                 placeholder="{% trans 'Search research papers, topics, authors...' %}" aria-label="{% trans 'Search research' %}" />
+          <button class="btn btn-garl-gold btn-lg px-4" type="submit"><i class="bi bi-search"></i></button>
+        </form>
+      </div>
+      <div class="col-lg-5 d-none d-lg-flex justify-content-center">
+        <div class="garl-hero-icon-display text-center">
+          <i class="bi bi-file-earmark-text" style="font-size:8rem; color:rgba(201,162,39,.3);"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 py-5">
+
+  <!-- Quick links -->
+  <div class="row g-3 mb-5">
+    <div class="col-md-3 col-6">
+      <a href="{% url 'research:paper_list' %}" class="garl-center-card garl-center-card--research d-block text-decoration-none text-center p-3">
+        <i class="bi bi-file-earmark-text fs-2 text-primary mb-2 d-block"></i>
+        <div class="fw-bold">{% trans "Research Papers" %}</div>
+      </a>
+    </div>
+    <div class="col-md-3 col-6">
+      <a href="{% url 'research:project_list' %}" class="garl-center-card garl-center-card--research d-block text-decoration-none text-center p-3">
+        <i class="bi bi-diagram-3 fs-2 text-primary mb-2 d-block"></i>
+        <div class="fw-bold">{% trans "Research Projects" %}</div>
+      </a>
+    </div>
+    <div class="col-md-3 col-6">
+      <a href="{% url 'research:submit_paper' %}" class="garl-center-card garl-center-card--research d-block text-decoration-none text-center p-3">
+        <i class="bi bi-upload fs-2 text-success mb-2 d-block"></i>
+        <div class="fw-bold">{% trans "Submit Paper" %}</div>
+      </a>
+    </div>
+    <div class="col-md-3 col-6">
+      <a href="{% url 'library:resource_list' %}" class="garl-center-card garl-center-card--research d-block text-decoration-none text-center p-3">
+        <i class="bi bi-collection fs-2 text-info mb-2 d-block"></i>
+        <div class="fw-bold">{% trans "Library" %}</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Research Categories -->
+  {% if categories %}
+  <h2 class="garl-section-title mb-4"><i class="bi bi-grid me-2 garl-text-gold"></i>{% trans "Research Categories" %}</h2>
+  <div class="row g-3 mb-5">
+    {% for cat in categories %}
+    <div class="col-md-3 col-sm-4 col-6">
+      <a href="{% url 'research:paper_list' %}?category={{ cat.pk }}" class="garl-category-pill">
+        {{ cat.name }}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Latest Papers -->
+  {% if latest_papers %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-file-earmark-text me-2 garl-text-gold"></i>{% trans "Latest Research Papers" %}</h2>
+    <a href="{% url 'research:paper_list' %}" class="btn btn-outline-primary btn-sm">{% trans "View All" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-4 mb-5">
+    {% for paper in latest_papers %}
+    <div class="col-lg-4 col-md-6">
+      <div class="garl-card h-100 p-3">
+        <div class="d-flex gap-2 mb-2 flex-wrap">
+          {% for cat in paper.categories.all|slice:":2" %}
+          <span class="badge garl-badge-type">{{ cat.name }}</span>
+          {% endfor %}
+        </div>
+        <h6 class="garl-clamp-2 mb-2">
+          <a href="{% url 'research:paper_detail' paper.slug %}" class="garl-link-dark">{{ paper.title }}</a>
+        </h6>
+        <p class="small text-muted garl-clamp-3">{{ paper.abstract|truncatewords:30 }}</p>
+        <div class="garl-card-meta mt-auto">
+          {% if paper.publication_year %}<small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ paper.publication_year }}</small>{% endif %}
+          {% if paper.journal_name %}<small class="text-muted ms-2"><i class="bi bi-journal me-1"></i>{{ paper.journal_name|truncatechars:25 }}</small>{% endif %}
+          <small class="text-muted ms-2"><i class="bi bi-download me-1"></i>{{ paper.download_count }}</small>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Active Projects -->
+  {% if active_projects %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-diagram-3 me-2 garl-text-gold"></i>{% trans "Active Research Projects" %}</h2>
+    <a href="{% url 'research:project_list' %}" class="btn btn-outline-primary btn-sm">{% trans "View All" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-4 mb-5">
+    {% for project in active_projects %}
+    <div class="col-md-4">
+      <div class="garl-card h-100 p-3">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <span class="badge bg-success">{{ project.get_status_display }}</span>
+        </div>
+        <h6 class="garl-clamp-2 mb-2">
+          <a href="{% url 'research:project_detail' project.slug %}" class="garl-link-dark">{{ project.title }}</a>
+        </h6>
+        <p class="small text-muted garl-clamp-2">{{ project.description|truncatewords:20 }}</p>
+        <div class="mt-2">
+          {% if project.institution %}<small class="text-muted"><i class="bi bi-building me-1"></i>{{ project.institution }}</small>{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Research Topics -->
+  {% if topics %}
+  <h2 class="garl-section-title mb-3"><i class="bi bi-tags me-2 garl-text-gold"></i>{% trans "Popular Research Topics" %}</h2>
+  <div class="d-flex flex-wrap gap-2">
+    {% for topic in topics %}
+    <a href="{% url 'search:results' %}?q={{ topic.name|urlencode }}&type=papers" class="badge garl-filter-badge fs-6 fw-normal">
+      {{ topic.name }}
+      {% if topic.paper_count %}<span class="ms-1 opacity-75">({{ topic.paper_count }})</span>{% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

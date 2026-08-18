@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "My Events" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <h3 class="mb-4"><i class="bi bi-calendar-check me-2 garl-text-gold"></i>{% trans "My Registered Events" %}</h3>
+  {% if registrations %}
+  <div class="row g-4">
+    {% for reg in registrations %}
+    <div class="col-lg-4 col-md-6">
+      <div class="garl-card p-3 h-100 d-flex flex-column">
+        <span class="badge garl-badge-event-type mb-2">{{ reg.event.get_event_type_display }}</span>
+        <h6 class="garl-clamp-2 mb-2"><a href="{% url 'events:detail' reg.event.slug %}" class="garl-link-dark">{{ reg.event.title }}</a></h6>
+        <div class="text-muted small mb-2">
+          <i class="bi bi-calendar3 me-1"></i>{{ reg.event.start_date|date:"M d, Y" }}<br>
+          <i class="bi bi-geo-alt me-1"></i>{{ reg.event.location|default:"Online"|truncatechars:35 }}
+        </div>
+        <div class="mt-auto d-flex justify-content-between align-items-center">
+          <span class="badge bg-success">{{ reg.get_status_display }}</span>
+          {% if reg.event.is_online and reg.event.online_link %}
+          <a href="{{ reg.event.online_link }}" target="_blank" rel="noopener" class="btn btn-xs btn-outline-info"><i class="bi bi-camera-video me-1"></i>{% trans "Join" %}</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="garl-empty-state text-center py-5">
+    <i class="bi bi-calendar-event fs-1 text-muted mb-3 d-block"></i>
+    <h5>{% trans "No registered events" %}</h5>
+    <a href="{% url 'events:list' %}" class="btn btn-garl-gold mt-2">{% trans "Browse Events" %}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

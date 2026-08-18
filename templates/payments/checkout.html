@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Checkout" %} — {{ content_title }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      <div class="garl-card overflow-hidden">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,var(--garl-navy),var(--garl-navy-mid));padding:1.75rem 2rem;">
+          <h3 class="text-white mb-1">{% trans "Secure Checkout" %}</h3>
+          <p class="mb-0" style="color:rgba(255,255,255,.6);font-size:.85rem;">
+            {% trans "Complete your purchase to access this content" %}
+          </p>
+        </div>
+
+        <div class="p-4">
+          <!-- Content summary -->
+          <div class="d-flex align-items-start gap-3 mb-4 p-3 rounded" style="background:var(--garl-off-white);">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,var(--garl-gold),var(--garl-gold-dark));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-{% if content_type == 'book' %}book{% elif content_type == 'journal' %}journal-text{% else %}file-earmark-text{% endif %} text-white"></i>
+            </div>
+            <div>
+              <div class="fw-bold garl-clamp-2">{{ content_title }}</div>
+              <div class="text-muted small">{{ price_obj.get_content_type_display }}</div>
+            </div>
+          </div>
+
+          <!-- Price breakdown -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between py-2 border-bottom">
+              <span class="text-muted">{% trans "Content Price" %}</span>
+              <span class="fw-bold">{{ price_obj.currency }} {{ price_obj.price }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-2 border-bottom">
+              <span class="text-muted small">
+                <i class="bi bi-building me-1"></i>{% trans "Platform fee" %} (40%)
+              </span>
+              <span class="small text-muted">{{ price_obj.currency }} {{ platform_cut }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-2 border-bottom">
+              <span class="text-muted small">
+                <i class="bi bi-person me-1"></i>{% trans "Publisher earns" %} (60%)
+              </span>
+              <span class="small text-success">{{ price_obj.currency }} {{ publisher_cut }}</span>
+            </div>
+            <div class="d-flex justify-content-between py-2 fw-bold fs-5">
+              <span>{% trans "Total" %}</span>
+              <span class="garl-text-gold">{{ price_obj.currency }} {{ price_obj.price }}</span>
+            </div>
+          </div>
+
+          <!-- Payment form -->
+          <form method="post" action="{% url 'payments:process_payment' content_type object_id %}">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label fw-medium">{% trans "Payment Method" %}</label>
+              <div class="row g-2">
+                <div class="col-4">
+                  <input type="radio" class="btn-check" name="payment_method" value="card" id="pm_card" checked />
+                  <label class="btn btn-outline-secondary w-100" for="pm_card">
+                    <i class="bi bi-credit-card d-block mb-1 fs-5"></i>
+                    <small>{% trans "Card" %}</small>
+                  </label>
+                </div>
+                <div class="col-4">
+                  <input type="radio" class="btn-check" name="payment_method" value="mobile_money" id="pm_mm" />
+                  <label class="btn btn-outline-secondary w-100" for="pm_mm">
+                    <i class="bi bi-phone d-block mb-1 fs-5"></i>
+                    <small>{% trans "Mobile Money" %}</small>
+                  </label>
+                </div>
+                <div class="col-4">
+                  <input type="radio" class="btn-check" name="payment_method" value="bank" id="pm_bank" />
+                  <label class="btn btn-outline-secondary w-100" for="pm_bank">
+                    <i class="bi bi-bank d-block mb-1 fs-5"></i>
+                    <small>{% trans "Bank" %}</small>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card details (shown by default) -->
+            <div id="cardDetails">
+              <div class="mb-3">
+                <label class="form-label">{% trans "Card Number" %}</label>
+                <input type="text" class="form-control" placeholder="1234 5678 9012 3456"
+                       maxlength="19" id="cardNumber" />
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-6">
+                  <label class="form-label">{% trans "Expiry" %}</label>
+                  <input type="text" class="form-control" placeholder="MM / YY" maxlength="7" />
+                </div>
+                <div class="col-6">
+                  <label class="form-label">{% trans "CVV" %}</label>
+                  <input type="password" class="form-control" placeholder="•••" maxlength="4" />
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">{% trans "Name on Card" %}</label>
+                <input type="text" class="form-control" value="{{ user.get_full_name }}" />
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 mb-4">
+              <i class="bi bi-shield-lock-fill text-success"></i>
+              <small class="text-muted">{% trans "256-bit SSL encrypted. Your payment details are secure." %}</small>
+            </div>
+
+            <div class="d-grid">
+              <button type="submit" class="btn btn-garl-gold btn-lg">
+                <i class="bi bi-lock-fill me-2"></i>
+                {% trans "Pay" %} {{ price_obj.currency }} {{ price_obj.price }} {% trans "Securely" %}
+              </button>
+            </div>
+          </form>
+
+          <p class="text-center text-muted small mt-3">
+            <i class="bi bi-arrow-left me-1"></i>
+            <a href="javascript:history.back()" class="garl-link-primary">{% trans "Go back" %}</a>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Format card number with spaces
+document.getElementById('cardNumber')?.addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\s+/g,'').replace(/[^0-9]/gi,'');
+  let matches = v.match(/\d{4,16}/g);
+  let match = matches && matches[0] || '';
+  let parts = [];
+  for (let i=0, len=match.length; i<len; i+=4) parts.push(match.substring(i,i+4));
+  e.target.value = parts.length ? parts.join(' ') : v;
+});
+</script>
+{% endblock %}

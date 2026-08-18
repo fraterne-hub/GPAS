@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ paper.title }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'research:paper_list' %}">{% trans "Papers" %}</a></li>
+    <li class="breadcrumb-item active garl-clamp-1">{{ paper.title|truncatechars:50 }}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="garl-card p-4">
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          {% for cat in paper.categories.all %}
+          <span class="badge garl-badge-type">{{ cat.name }}</span>
+          {% endfor %}
+          <span class="badge bg-secondary">{{ paper.language }}</span>
+        </div>
+        <h2 class="mb-3">{{ paper.title }}</h2>
+        <div class="d-flex flex-wrap gap-3 text-muted small mb-4">
+          {% if paper.publication_year %}<span><i class="bi bi-calendar3 me-1"></i>{{ paper.publication_year }}</span>{% endif %}
+          {% if paper.journal_name %}<span><i class="bi bi-journal me-1"></i>{{ paper.journal_name }}</span>{% endif %}
+          {% if paper.pages %}<span><i class="bi bi-file-text me-1"></i>{% trans "pp." %} {{ paper.pages }}</span>{% endif %}
+          {% if paper.doi %}<span><i class="bi bi-link-45deg me-1"></i>DOI: {{ paper.doi }}</span>{% endif %}
+        </div>
+        <h5>{% trans "Abstract" %}</h5>
+        <p class="mb-4">{{ paper.abstract }}</p>
+        {% if paper.keywords %}
+        <div class="mb-4">
+          <strong>{% trans "Keywords:" %}</strong>
+          {% for kw in paper.keywords.split %}
+          <span class="badge bg-light text-dark border me-1">{{ kw|cut:"," }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if paper.authors.exists %}
+        <div class="mb-3">
+          <strong>{% trans "Authors:" %}</strong>
+          {% for author in paper.authors.all %}
+          <a href="{% url 'accounts:public_profile' author.username %}" class="garl-link-primary ms-2">{{ author.get_full_name }}</a>{% if not forloop.last %},{% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+        <div class="d-flex gap-2 mt-4 flex-wrap">
+          {% if paper.file %}
+          <a href="{% url 'research:paper_download' paper.pk %}" class="btn btn-garl-gold">
+            <i class="bi bi-download me-2"></i>{% trans "Download PDF" %}
+          </a>
+          {% endif %}
+          <button class="btn btn-outline-secondary" data-bookmark data-content-type="paper" data-object-id="{{ paper.pk }}"
+                  title="{% trans 'Bookmark' %}">
+            <i class="bi bi-bookmark"></i> {% trans "Bookmark" %}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="garl-card p-3 mb-3">
+        <h6 class="fw-bold mb-3">{% trans "Paper Stats" %}</h6>
+        <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">{% trans "Views" %}</span><strong>{{ paper.view_count }}</strong></div>
+        <div class="d-flex justify-content-between py-2"><span class="text-muted">{% trans "Downloads" %}</span><strong>{{ paper.download_count }}</strong></div>
+      </div>
+
+      {% if related %}
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3">{% trans "Related Papers" %}</h6>
+        {% for rp in related %}
+        <div class="mb-3 pb-3 border-bottom">
+          <a href="{% url 'research:paper_detail' rp.slug %}" class="garl-link-dark small fw-medium garl-clamp-2 d-block">{{ rp.title }}</a>
+          {% if rp.publication_year %}<small class="text-muted">{{ rp.publication_year }}</small>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

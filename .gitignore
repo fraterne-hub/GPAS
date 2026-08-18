@@ -1,0 +1,174 @@
+# ==========================================
+# 1. ENVIRONMENT VARIABLES & SECRETS
+# ==========================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+
+# ==========================================
+# 2. DEPENDENCIES & PACKAGES
+# ==========================================
+# Node / JS
+node_modules/
+jspm_packages/
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PHP / Composer
+/vendor/
+
+# Ruby / Rails
+/.bundle/
+/vendor/bundle/
+/log/
+/tmp/
+
+# ==========================================
+# 3. BUILD & PRODUCTION OUTPUTS
+# ==========================================
+/dist/
+/build/
+/out/
+/.next/
+/.nuxt/
+/.vuepress/dist
+/.astro/
+/.svelte-kit/
+/.output/
+/public/build/
+/target/
+/bin/
+/obj/
+
+# ==========================================
+# 4. OPERATING SYSTEM FILES
+# ==========================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.trash
+
+# ==========================================
+# 5. EDITORS & IDES
+# ==========================================
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains / IntelliJ / WebStorm / PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Vim & Sublime Text
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# Visual Studio
+.vs/
+*.user
+*.userosmat
+*.suo
+
+# ==========================================
+# 6. LOGS, CACHES & TEMP FILES
+# ==========================================
+logs
+*.log
+*.tmp
+*.temp
+/tmp/
+.cache/
+.eslintcache
+.stylelintcache
+.prettiercache
+.parcel-cache/
+.turbo/
+
+# ==========================================
+# 7. DATABASES & LOCAL STORAGE
+# ==========================================
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql
+/db/*.sqlite3
+
+# ==========================================
+# 8. TESTING & COVERAGE
+# ==========================================
+/coverage/
+/.nyc_output/
+.playwright/
+/playwright-report/
+/test-results/

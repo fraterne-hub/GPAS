@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load i18n humanize garl_tags %}
+{% block title %}{% trans "Analytics Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <h3 class="mb-4"><i class="bi bi-bar-chart-line me-2 garl-text-gold"></i>{% trans "Analytics Dashboard" %}</h3>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-5">
+    <div class="col-6 col-md-4 col-lg-2"><div class="garl-admin-stat garl-admin-stat--blue"><div class="garl-admin-stat-number">{{ stats.total_users|intcomma }}</div><div class="garl-admin-stat-label">{% trans "Total Users" %}</div><div class="garl-admin-stat-sub">+{{ stats.new_users_week }} {% trans "this week" %}</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="garl-admin-stat garl-admin-stat--gold"><div class="garl-admin-stat-number">{{ stats.total_publications|intcomma }}</div><div class="garl-admin-stat-label">{% trans "Publications" %}</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="garl-admin-stat garl-admin-stat--green"><div class="garl-admin-stat-number">{{ stats.total_courses|intcomma }}</div><div class="garl-admin-stat-label">{% trans "Courses" %}</div><div class="garl-admin-stat-sub">{{ stats.total_enrollments|intcomma }} {% trans "enrolled" %}</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="garl-admin-stat garl-admin-stat--teal"><div class="garl-admin-stat-number">{{ stats.total_papers|intcomma }}</div><div class="garl-admin-stat-label">{% trans "Research Papers" %}</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="garl-admin-stat garl-admin-stat--purple"><div class="garl-admin-stat-number">{{ stats.total_projects|intcomma }}</div><div class="garl-admin-stat-label">{% trans "Innovation Projects" %}</div></div></div>
+    <div class="col-6 col-md-4 col-lg-2"><div class="garl-admin-stat garl-admin-stat--red"><div class="garl-admin-stat-number">{{ stats.open_tickets|intcomma }}</div><div class="garl-admin-stat-label">{% trans "Open Tickets" %}</div></div></div>
+  </div>
+
+  <!-- Users by Role -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-6">
+      <div class="garl-admin-card">
+        <div class="garl-admin-card-header"><h6 class="mb-0"><i class="bi bi-people me-2"></i>{% trans "Users by Role" %}</h6></div>
+        <div class="p-3">
+          {% for item in users_by_role %}
+          <div class="d-flex align-items-center mb-3">
+            <div style="min-width:130px;font-size:.82rem;font-weight:500;">{{ item.role|title }}</div>
+            <div class="flex-grow-1 mx-3">
+              <div class="progress" style="height:20px;" role="progressbar" aria-valuenow="{{ item.count }}" aria-valuemin="0" aria-valuemax="{{ stats.total_users }}">
+                {% widthratio item.count stats.total_users 100 as pct %}
+                <div class="progress-bar bg-warning" style="width:{{ pct }}%;">{{ item.count }}</div>
+              </div>
+            </div>
+            <div style="min-width:36px;text-align:right;font-weight:600;font-size:.82rem;">{{ item.count }}</div>
+          </div>
+          {% empty %}<p class="text-muted">{% trans "No data available." %}</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Audit Log -->
+    <div class="col-lg-6">
+      <div class="garl-admin-card">
+        <div class="garl-admin-card-header"><h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>{% trans "Recent Activity" %}</h6></div>
+        <div class="garl-audit-list">
+          {% for log in recent_logs %}
+          <div class="garl-audit-item">
+            <div class="garl-audit-icon garl-audit-{{ log.action }}">
+              <i class="bi bi-{% if log.action == 'login' %}box-arrow-in-right{% elif log.action == 'create' %}plus-circle{% elif log.action == 'approve' %}check-circle{% elif log.action == 'reject' %}x-circle{% elif log.action == 'delete' %}trash{% elif log.action == 'download' %}download{% else %}pencil{% endif %}"></i>
+            </div>
+            <div class="garl-audit-body">
+              <div class="garl-audit-desc"><strong>{{ log.user.get_full_name|default:"System" }}</strong> — {{ log.get_action_display }} {{ log.object_repr|truncatechars:40 }}</div>
+              <small class="text-muted">{{ log.timestamp|date:"M d, H:i" }}</small>
+            </div>
+          </div>
+          {% empty %}<p class="text-muted text-center py-3">{% trans "No activity yet." %}</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily Stats Table -->
+  {% if daily %}
+  <div class="garl-admin-card">
+    <div class="garl-admin-card-header"><h6 class="mb-0"><i class="bi bi-calendar3 me-2"></i>{% trans "Daily Statistics (Last 14 Days)" %}</h6></div>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead><tr><th>{% trans "Date" %}</th><th>{% trans "New Users" %}</th><th>{% trans "Publications" %}</th><th>{% trans "Enrollments" %}</th><th>{% trans "Downloads" %}</th><th>{% trans "Searches" %}</th></tr></thead>
+        <tbody>
+          {% for day in daily %}
+          <tr>
+            <td>{{ day.date|date:"M d, Y" }}</td>
+            <td>{{ day.new_users }}</td>
+            <td>{{ day.new_publications }}</td>
+            <td>{{ day.new_enrollments }}</td>
+            <td>{{ day.downloads }}</td>
+            <td>{{ day.searches }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

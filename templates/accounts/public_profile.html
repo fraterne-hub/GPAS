@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ profile_user.get_full_name }}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'community:researcher_list' %}">{% trans "Researchers" %}</a></li>
+    <li class="breadcrumb-item active">{{ profile_user.get_full_name }}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      <div class="garl-card p-4 text-center">
+        {% if profile.avatar %}
+        <img src="{{ profile.avatar.url }}" alt="{{ profile_user.get_full_name }}"
+             class="rounded-circle mb-3" width="110" height="110" style="object-fit:cover;" />
+        {% else %}
+        <div class="garl-avatar-lg garl-avatar-initials rounded-circle mx-auto mb-3"
+             style="width:110px;height:110px;font-size:2.5rem;">
+          {{ profile_user.first_name|first }}{{ profile_user.last_name|first }}
+        </div>
+        {% endif %}
+        <h5 class="mb-1">{{ profile_user.get_full_name }}</h5>
+        <p class="text-muted small mb-2">{{ profile_user.get_role_display }}</p>
+        {% if profile.headline %}
+        <p class="small fst-italic text-muted">{{ profile.headline }}</p>
+        {% endif %}
+        {% if profile.country %}
+        <p class="small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i>{{ profile.city }}{% if profile.city and profile.country %}, {% endif %}{{ profile.country }}</p>
+        {% endif %}
+        {% if profile.website %}
+        <a href="{{ profile.website }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary mt-2 w-100">
+          <i class="bi bi-globe me-1"></i>{% trans "Website" %}
+        </a>
+        {% endif %}
+        <!-- Social links -->
+        {% if profile.orcid or profile.linkedin or profile.twitter or profile.researchgate %}
+        <div class="d-flex justify-content-center gap-3 mt-3">
+          {% if profile.orcid %}
+          <a href="https://orcid.org/{{ profile.orcid }}" target="_blank" rel="noopener"
+             class="garl-social-link" title="ORCID" aria-label="ORCID">
+            <i class="bi bi-person-badge"></i>
+          </a>
+          {% endif %}
+          {% if profile.linkedin %}
+          <a href="{{ profile.linkedin }}" target="_blank" rel="noopener"
+             class="garl-social-link" title="LinkedIn" aria-label="LinkedIn">
+            <i class="bi bi-linkedin"></i>
+          </a>
+          {% endif %}
+          {% if profile.twitter %}
+          <a href="{{ profile.twitter }}" target="_blank" rel="noopener"
+             class="garl-social-link" title="Twitter / X" aria-label="Twitter">
+            <i class="bi bi-twitter-x"></i>
+          </a>
+          {% endif %}
+          {% if profile.researchgate %}
+          <a href="{{ profile.researchgate }}" target="_blank" rel="noopener"
+             class="garl-social-link" title="ResearchGate" aria-label="ResearchGate">
+            <i class="bi bi-journals"></i>
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if user.is_authenticated and user != profile_user %}
+        <form method="post" action="#" class="mt-3">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-success w-100">
+            <i class="bi bi-diagram-3 me-1"></i>{% trans "Request Collaboration" %}
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="col-lg-9">
+      <!-- Bio -->
+      {% if profile.bio %}
+      <div class="garl-card p-4 mb-4">
+        <h5 class="mb-3"><i class="bi bi-person-lines-fill me-2 garl-text-gold"></i>{% trans "Biography" %}</h5>
+        <p class="mb-0">{{ profile.bio }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Academic info -->
+      {% if profile.institution or profile.department or profile.field_of_study %}
+      <div class="garl-card p-4 mb-4">
+        <h5 class="mb-3"><i class="bi bi-mortarboard me-2 garl-text-gold"></i>{% trans "Academic Information" %}</h5>
+        <div class="row g-3">
+          {% if profile.institution %}
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Institution" %}</p>
+            <p class="fw-medium mb-0">{{ profile.institution }}</p>
+          </div>
+          {% endif %}
+          {% if profile.department %}
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Department" %}</p>
+            <p class="fw-medium mb-0">{{ profile.department }}</p>
+          </div>
+          {% endif %}
+          {% if profile.field_of_study %}
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">{% trans "Field of Study" %}</p>
+            <p class="fw-medium mb-0">{{ profile.field_of_study }}</p>
+          </div>
+          {% endif %}
+          {% if profile.orcid %}
+          <div class="col-md-6">
+            <p class="text-muted small mb-0">ORCID</p>
+            <a href="https://orcid.org/{{ profile.orcid }}" target="_blank" rel="noopener"
+               class="garl-link-primary fw-medium">{{ profile.orcid }}</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Research papers -->
+      {% with papers=profile_user.research_papers.all %}
+      {% if papers %}
+      <div class="garl-card p-4 mb-4">
+        <h5 class="mb-3"><i class="bi bi-file-earmark-text me-2 garl-text-gold"></i>{% trans "Research Papers" %}</h5>
+        {% for paper in papers|slice:":5" %}
+        <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+          <h6 class="mb-1">
+            <a href="{% url 'research:paper_detail' paper.slug %}" class="garl-link-dark">{{ paper.title }}</a>
+          </h6>
+          <small class="text-muted">
+            {% if paper.publication_year %}{{ paper.publication_year }}{% endif %}
+            {% if paper.journal_name %} &mdash; {{ paper.journal_name }}{% endif %}
+          </small>
+        </div>
+        {% endfor %}
+        {% if papers.count > 5 %}
+        <a href="{% url 'search:results' %}?q={{ profile_user.get_full_name|urlencode }}&type=papers"
+           class="btn btn-sm btn-outline-primary">
+          {% trans "View all papers" %}
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <!-- Publications -->
+      {% with pubs=profile_user.publications.filter %}
+      {% with published=profile_user.publications.all %}
+      {% if published %}
+      <div class="garl-card p-4 mb-4">
+        <h5 class="mb-3"><i class="bi bi-journals me-2 garl-text-gold"></i>{% trans "Publications" %}</h5>
+        {% for pub in published|slice:":5" %}
+        {% if pub.status == 'published' %}
+        <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+          <h6 class="mb-1">
+            <a href="{% url 'publishing:publication_detail' pub.slug %}" class="garl-link-dark">{{ pub.title }}</a>
+          </h6>
+          <div class="d-flex gap-2">
+            {% if pub.pub_type %}<span class="badge garl-badge-type small">{{ pub.pub_type.name }}</span>{% endif %}
+            <small class="text-muted">{{ pub.published_at|date:"Y" }}</small>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+      {% endwith %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

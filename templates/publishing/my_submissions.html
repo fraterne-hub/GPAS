@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "My Submissions" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3><i class="bi bi-journals me-2 garl-text-gold"></i>{% trans "My Submissions" %}</h3>
+    <a href="{% url 'publishing:submit' %}" class="btn btn-garl-gold btn-sm"><i class="bi bi-plus me-1"></i>{% trans "New Submission" %}</a>
+  </div>
+  {% if publications %}
+  <div class="garl-card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Title" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Submitted" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pub in publications %}
+          <tr>
+            <td class="garl-clamp-1" style="max-width:300px;">{{ pub.title }}</td>
+            <td>{% if pub.pub_type %}{{ pub.pub_type.name }}{% else %}&mdash;{% endif %}</td>
+            <td><span class="badge garl-status-badge garl-status-{{ pub.status }}">{{ pub.get_status_display }}</span></td>
+            <td><small class="text-muted">{{ pub.created_at|date:"M d, Y" }}</small></td>
+            <td>
+              {% if pub.status == 'published' %}
+              <a href="{% url 'publishing:publication_detail' pub.slug %}" class="btn btn-xs btn-outline-primary">{% trans "View" %}</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="garl-empty-state text-center py-5">
+    <i class="bi bi-journals fs-1 text-muted mb-3 d-block"></i>
+    <h5>{% trans "No submissions yet" %}</h5>
+    <a href="{% url 'publishing:submit' %}" class="btn btn-garl-gold mt-2">{% trans "Submit Your First Publication" %}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

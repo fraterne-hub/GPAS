@@ -1,0 +1,18 @@
+makemigrations:
+Migrations for 'payments':
+  payments\migrations\0001_initial.py
+    + Create model PlatformRevenue
+    + Create model ContentPrice
+    + Create model Payout
+    + Create model PublisherEarnings
+    + Create model AccessGrant
+    + Create model Purchase
+
+migrate:
+Operations to perform:
+  Apply all migrations: accounts, admin, ai_support, analytics, auth, community, contenttypes, core, events, health_science, innovation, learning, library, notifications, payments, publishing, research, sessions, support
+Running migrations:
+  Applying payments.0001_initial... OK
+
+check:
+System check identified no issues (0 silenced).

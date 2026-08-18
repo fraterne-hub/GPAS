@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Manage Users" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3><i class="bi bi-people me-2 garl-text-gold"></i>{% trans "Manage Users" %}</h3>
+    <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>{% trans "Admin Dashboard" %}</a>
+  </div>
+
+  <form method="get" class="mb-4">
+    <div class="row g-2">
+      <div class="col-md-5"><input type="search" name="q" class="form-control" value="{{ q }}" placeholder="{% trans 'Search by name, email, username...' %}" /></div>
+      <div class="col-md-3">
+        <select name="role" class="form-select">
+          <option value="">{% trans "All Roles" %}</option>
+          {% for val, label in roles %}<option value="{{ val }}" {% if role_filter == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2"><button type="submit" class="btn btn-garl-gold w-100">{% trans "Filter" %}</button></div>
+      <div class="col-md-2"><a href="{% url 'dashboard:manage_users' %}" class="btn btn-outline-secondary w-100">{% trans "Clear" %}</a></div>
+    </div>
+  </form>
+
+  <div class="garl-card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Email" %}</th>
+            <th>{% trans "Role" %}</th>
+            <th>{% trans "Joined" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in page_obj %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="garl-avatar-sm garl-avatar-initials rounded-circle">{{ u.first_name|first }}{{ u.last_name|first }}</div>
+                <div>
+                  <a href="{% url 'accounts:public_profile' u.username %}" class="garl-link-dark fw-medium small d-block">{{ u.get_full_name }}</a>
+                  <small class="text-muted">@{{ u.username }}</small>
+                </div>
+              </div>
+            </td>
+            <td><small>{{ u.email }}</small></td>
+            <td>
+              <form method="post" action="{% url 'dashboard:change_user_role' u.pk %}" class="d-inline">
+                {% csrf_token %}
+                <select name="role" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()" {% if u == request.user %}disabled{% endif %}>
+                  {% for val, label in roles %}<option value="{{ val }}" {% if u.role == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+              </form>
+            </td>
+            <td><small class="text-muted">{{ u.date_joined|date:"M d, Y" }}</small></td>
+            <td>
+              {% if u.is_active %}
+              <span class="badge bg-success">{% trans "Active" %}</span>
+              {% else %}
+              <span class="badge bg-secondary">{% trans "Inactive" %}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u != request.user %}
+              <form method="post" action="{% url 'dashboard:toggle_user_active' u.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-xs {% if u.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+                  {% if u.is_active %}{% trans "Deactivate" %}{% else %}{% trans "Activate" %}{% endif %}
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-muted text-center py-4">{% trans "No users found." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <nav class="mt-4"><ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&role={{ role_filter }}">{% trans "Previous" %}</a></li>{% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&role={{ role_filter }}">{% trans "Next" %}</a></li>{% endif %}
+  </ul></nav>
+  {% endif %}
+</div>
+{% endblock %}

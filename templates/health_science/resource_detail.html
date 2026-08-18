@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ resource.title }}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="alert alert-warning d-flex align-items-center mb-4 py-2">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <small>{% trans "Educational content only — not a substitute for professional medical advice." %}</small>
+  </div>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="garl-card p-4">
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          {% if resource.category %}<span class="badge bg-danger">{{ resource.category.get_discipline_display }}</span>{% endif %}
+          <span class="badge bg-secondary">{{ resource.get_resource_type_display }}</span>
+          {% if resource.language %}<span class="badge bg-light text-dark border">{{ resource.language }}</span>{% endif %}
+        </div>
+        <h2 class="mb-3">{{ resource.title }}</h2>
+        {% if resource.author %}<p class="text-muted mb-2"><i class="bi bi-person me-2"></i><strong>{% trans "Author:" %}</strong> {{ resource.author }}</p>{% endif %}
+        {% if resource.year %}<p class="text-muted mb-2"><i class="bi bi-calendar3 me-2"></i>{{ resource.year }}</p>{% endif %}
+        <p>{{ resource.description }}</p>
+        <div class="d-flex flex-wrap gap-2 mt-4">
+          {% if resource.file %}
+          <a href="{% url 'health_science:download' resource.pk %}" class="btn btn-danger"><i class="bi bi-download me-2"></i>{% trans "Download" %}</a>
+          {% endif %}
+          {% if resource.external_url %}
+          <a href="{{ resource.external_url }}" target="_blank" rel="noopener" class="btn btn-outline-danger"><i class="bi bi-box-arrow-up-right me-2"></i>{% trans "Open Resource" %}</a>
+          {% endif %}
+          <button class="btn btn-outline-secondary" data-bookmark data-content-type="health" data-object-id="{{ resource.pk }}">
+            <i class="bi bi-bookmark me-1"></i>{% trans "Bookmark" %}
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="garl-card p-3 mb-3">
+        <h6 class="fw-bold mb-3">{% trans "Resource Info" %}</h6>
+        <div class="d-flex justify-content-between py-2 border-bottom"><span class="text-muted">{% trans "Views" %}</span><strong>{{ resource.view_count }}</strong></div>
+        <div class="d-flex justify-content-between py-2"><span class="text-muted">{% trans "Downloads" %}</span><strong>{{ resource.download_count }}</strong></div>
+      </div>
+      {% if related %}
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3">{% trans "Related Resources" %}</h6>
+        {% for r in related %}
+        <div class="mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}">
+          <a href="{% url 'health_science:resource_detail' r.slug %}" class="garl-link-dark small fw-medium garl-clamp-2 d-block">{{ r.title }}</a>
+          <small class="text-muted">{{ r.get_resource_type_display }}</small>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

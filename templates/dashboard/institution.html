@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Institution Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="garl-welcome-banner mb-4">
+    <div class="d-flex align-items-center gap-4 flex-wrap">
+      {% if institution.logo %}
+      <img src="{{ institution.logo.url }}" alt="{{ institution.name }}" style="height:60px;object-fit:contain;" />
+      {% else %}
+      <div class="garl-avatar-lg garl-avatar-initials rounded-circle">{{ institution.name|first }}</div>
+      {% endif %}
+      <div>
+        <h4 class="text-white mb-1">{{ institution.name }}</h4>
+        <p class="text-white-50 mb-0">
+          {% if institution.city %}{{ institution.city }}, {% endif %}{{ institution.country }}
+          {% if institution.is_verified %}&nbsp;<span class="badge bg-success"><i class="bi bi-patch-check me-1"></i>{% trans "Verified" %}</span>{% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Institution info -->
+    <div class="col-lg-4">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-building me-2"></i>{% trans "Institution Info" %}</h6>
+          <a href="{% url 'community:institution_detail' institution.slug %}" class="btn btn-xs btn-outline-primary">{% trans "Public View" %}</a>
+        </div>
+        <div class="p-3">
+          {% if institution.description %}<p class="text-muted small">{{ institution.description|truncatewords:40 }}</p>{% endif %}
+          {% if institution.website %}<p class="small"><i class="bi bi-globe me-2 text-primary"></i><a href="{{ institution.website }}" target="_blank" rel="noopener">{{ institution.website|truncatechars:40 }}</a></p>{% endif %}
+          {% if institution.email %}<p class="small"><i class="bi bi-envelope me-2 text-primary"></i>{{ institution.email }}</p>{% endif %}
+          {% if institution.established_year %}<p class="small text-muted"><i class="bi bi-calendar3 me-2"></i>{% trans "Est." %} {{ institution.established_year }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Members -->
+    <div class="col-lg-8">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-people me-2 text-success"></i>{% trans "Members" %} <span class="badge bg-secondary ms-1">{{ members|length }}</span></h6>
+        </div>
+        {% if members %}
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead><tr><th>{% trans "Name" %}</th><th>{% trans "Role" %}</th><th>{% trans "Department" %}</th></tr></thead>
+            <tbody>
+              {% for m in members %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="garl-avatar-sm garl-avatar-initials rounded-circle">{{ m.user.first_name|first }}{{ m.user.last_name|first }}</div>
+                    <a href="{% url 'accounts:public_profile' m.user.username %}" class="garl-link-dark small">{{ m.user.get_full_name }}</a>
+                  </div>
+                </td>
+                <td><span class="badge bg-secondary">{{ m.get_role_display }}</span></td>
+                <td><small class="text-muted">{% if m.department %}{{ m.department.name }}{% else %}&mdash;{% endif %}</small></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4"><p class="text-muted small">{% trans "No members yet." %}</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

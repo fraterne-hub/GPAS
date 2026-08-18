@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Health Science Resources" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2"></i>{% trans "Filter" %}</h6>
+        <form method="get">
+          <div class="mb-3"><input type="search" name="q" class="form-control form-control-sm" value="{{ q }}" placeholder="{% trans 'Search...' %}" /></div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Discipline" %}</label>
+            <select name="discipline" class="form-select form-select-sm">
+              <option value="">{% trans "All Disciplines" %}</option>
+              {% for val, label in disciplines %}<option value="{{ val }}" {% if request.GET.discipline == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Type" %}</label>
+            <select name="type" class="form-select form-select-sm">
+              <option value="">{% trans "All Types" %}</option>
+              {% for val, label in types %}<option value="{{ val }}" {% if request.GET.type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-sm btn-garl-gold">{% trans "Apply" %}</button>
+            <a href="{% url 'health_science:resource_list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="col-lg-9">
+      <h4 class="mb-3">{% trans "Health Science Resources" %}{% if q %}<small class="text-muted fs-6 ms-2">— "{{ q }}"</small>{% endif %}</h4>
+      {% if page_obj %}
+      <div class="row g-3">
+        {% for res in page_obj %}
+        <div class="col-md-6">
+          <div class="garl-card p-3 h-100">
+            <div class="d-flex gap-2 mb-2 flex-wrap">
+              {% if res.category %}<span class="badge bg-danger-subtle text-danger-emphasis small">{{ res.category.get_discipline_display }}</span>{% endif %}
+              <span class="badge bg-secondary small">{{ res.get_resource_type_display }}</span>
+            </div>
+            <h6 class="garl-clamp-2 mb-2"><a href="{% url 'health_science:resource_detail' res.slug %}" class="garl-link-dark">{{ res.title }}</a></h6>
+            <p class="small text-muted garl-clamp-2">{{ res.description|truncatewords:20 }}</p>
+            <div class="mt-auto d-flex align-items-center justify-content-between">
+              {% if res.author %}<small class="text-muted"><i class="bi bi-person me-1"></i>{{ res.author|truncatechars:30 }}</small>{% else %}<span></span>{% endif %}
+              {% if res.file %}<a href="{% url 'health_science:download' res.pk %}" class="btn btn-xs btn-outline-danger"><i class="bi bi-download"></i></a>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if page_obj.has_other_pages %}
+      <nav class="mt-4"><ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ page_obj.number }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+      </ul></nav>
+      {% endif %}
+      {% else %}
+      <div class="garl-empty-state text-center py-5"><i class="bi bi-heart-pulse fs-1 text-muted mb-3 d-block"></i><h5>{% trans "No resources found" %}</h5></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

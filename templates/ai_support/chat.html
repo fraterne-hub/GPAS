@@ -1,0 +1,707 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "AI Support Assistant" %}{% endblock %}
+{% block meta_description %}Ask GARL's AI assistant anything about the platform — courses, research, publishing, health resources, events and more.{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── AI Chat page ─────────────────────────────────────────────────────────── */
+.garl-chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 130px);
+  min-height: 500px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+.garl-chat-header {
+  background: linear-gradient(135deg, var(--garl-navy), var(--garl-navy-mid));
+  color: #fff;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--garl-radius) var(--garl-radius) 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.garl-chat-ai-avatar {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--garl-gold), var(--garl-gold-dark));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; color: #fff;
+  flex-shrink: 0;
+}
+.garl-chat-status {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-size: .78rem; opacity: .8;
+}
+.garl-chat-status-dot {
+  width: 8px; height: 8px;
+  background: #28c76f;
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .4; }
+}
+
+/* Messages area */
+.garl-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: var(--garl-off-white);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+[data-bs-theme="dark"] .garl-chat-messages {
+  background: var(--garl-navy-mid);
+}
+
+/* Individual message bubbles */
+.garl-chat-msg {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-start;
+  animation: fadeInUp .25s ease;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.garl-chat-msg--user  { flex-direction: row-reverse; }
+
+.garl-chat-msg-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem;
+  flex-shrink: 0;
+}
+.garl-chat-msg--assistant .garl-chat-msg-avatar {
+  background: linear-gradient(135deg, var(--garl-gold), var(--garl-gold-dark));
+  color: #fff;
+}
+.garl-chat-msg--user .garl-chat-msg-avatar {
+  background: var(--bs-primary);
+  color: #fff;
+}
+
+.garl-chat-bubble {
+  max-width: 75%;
+  padding: .85rem 1.1rem;
+  border-radius: 1.2rem;
+  font-size: .92rem;
+  line-height: 1.6;
+  word-break: break-word;
+}
+.garl-chat-msg--user .garl-chat-bubble {
+  background: var(--bs-primary);
+  color: #fff;
+  border-bottom-right-radius: .3rem;
+}
+.garl-chat-msg--assistant .garl-chat-bubble {
+  background: #fff;
+  color: var(--garl-text);
+  border-bottom-left-radius: .3rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+[data-bs-theme="dark"] .garl-chat-msg--assistant .garl-chat-bubble {
+  background: var(--garl-navy-light);
+  color: rgba(255,255,255,.9);
+}
+
+/* Markdown-style bold inside bubble */
+.garl-chat-bubble strong, .garl-chat-bubble b { font-weight: 700; }
+.garl-chat-bubble em { font-style: italic; }
+
+/* Sources chips */
+.garl-chat-sources {
+  margin-top: .6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+.garl-chat-source-chip {
+  display: inline-flex; align-items: center; gap: .3rem;
+  background: rgba(201,162,39,.12);
+  border: 1px solid rgba(201,162,39,.3);
+  color: var(--garl-gold);
+  border-radius: 999px;
+  padding: .18rem .65rem;
+  font-size: .75rem;
+  text-decoration: none;
+  transition: var(--garl-transition);
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.garl-chat-source-chip:hover {
+  background: var(--garl-gold);
+  color: #fff;
+}
+
+/* Confidence indicator */
+.garl-chat-confidence {
+  font-size: .7rem;
+  margin-top: .4rem;
+  opacity: .65;
+}
+.garl-chat-confidence--high   { color: #28c76f; }
+.garl-chat-confidence--medium { color: var(--garl-gold); }
+.garl-chat-confidence--low    { color: #ea5455; }
+
+/* Feedback buttons */
+.garl-chat-feedback {
+  display: flex;
+  gap: .4rem;
+  margin-top: .5rem;
+  align-items: center;
+}
+.garl-feedback-btn {
+  background: transparent;
+  border: 1px solid var(--garl-border);
+  border-radius: 999px;
+  padding: .15rem .5rem;
+  font-size: .75rem;
+  cursor: pointer;
+  transition: var(--garl-transition);
+  color: var(--garl-text-muted);
+}
+.garl-feedback-btn:hover { background: rgba(25,135,84,.1); border-color: #28c76f; color: #28c76f; }
+.garl-feedback-btn.garl-feedback-btn--bad:hover { background: rgba(234,84,85,.1); border-color: #ea5455; color: #ea5455; }
+.garl-feedback-btn.garl-feedback-btn--active { background: rgba(25,135,84,.15); border-color: #28c76f; color: #28c76f; }
+
+/* Typing indicator */
+.garl-typing-indicator {
+  display: none;
+  align-items: flex-start;
+  gap: .75rem;
+}
+.garl-typing-indicator.show { display: flex; }
+.garl-typing-dots {
+  background: #fff;
+  border-radius: 1.2rem;
+  padding: .75rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  display: flex;
+  gap: .3rem;
+  align-items: center;
+}
+[data-bs-theme="dark"] .garl-typing-dots { background: var(--garl-navy-light); }
+.garl-typing-dot {
+  width: 8px; height: 8px;
+  background: var(--garl-gold);
+  border-radius: 50%;
+  animation: bounce-dot .9s infinite;
+}
+.garl-typing-dot:nth-child(2) { animation-delay: .15s; }
+.garl-typing-dot:nth-child(3) { animation-delay: .30s; }
+@keyframes bounce-dot {
+  0%, 100% { transform: translateY(0); }
+  40%       { transform: translateY(-6px); }
+}
+
+/* Input area */
+.garl-chat-input-area {
+  background: #fff;
+  border-radius: 0 0 var(--garl-radius) var(--garl-radius);
+  border-top: 1px solid var(--garl-border);
+  padding: 1rem 1.25rem;
+  flex-shrink: 0;
+}
+[data-bs-theme="dark"] .garl-chat-input-area {
+  background: var(--garl-navy-mid);
+  border-color: var(--garl-navy-light);
+}
+.garl-chat-form {
+  display: flex;
+  gap: .75rem;
+  align-items: flex-end;
+}
+.garl-chat-textarea {
+  flex: 1;
+  resize: none;
+  border-radius: 1.5rem;
+  border: 1.5px solid var(--garl-border);
+  padding: .65rem 1.1rem;
+  font-size: .9rem;
+  line-height: 1.5;
+  min-height: 44px;
+  max-height: 120px;
+  overflow-y: auto;
+  transition: border-color .2s;
+  background: var(--garl-off-white);
+  color: var(--garl-text);
+  font-family: var(--garl-font);
+}
+[data-bs-theme="dark"] .garl-chat-textarea {
+  background: var(--garl-navy-light);
+  border-color: var(--garl-navy-light);
+  color: rgba(255,255,255,.9);
+}
+.garl-chat-textarea:focus {
+  outline: none;
+  border-color: var(--garl-gold);
+  box-shadow: 0 0 0 .2rem rgba(201,162,39,.15);
+}
+.garl-chat-send-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--garl-gold), var(--garl-gold-dark));
+  border: none;
+  color: #fff;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: var(--garl-transition);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.garl-chat-send-btn:hover  { transform: scale(1.08); box-shadow: 0 4px 12px rgba(201,162,39,.4); }
+.garl-chat-send-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* Suggestions chips (initial empty state) */
+.garl-chat-suggestions {
+  padding: 0 1.5rem 1rem;
+}
+.garl-suggestion-chip {
+  display: inline-block;
+  background: rgba(13,110,253,.07);
+  border: 1px solid rgba(13,110,253,.2);
+  color: var(--bs-primary);
+  border-radius: 999px;
+  padding: .3rem .85rem;
+  font-size: .8rem;
+  cursor: pointer;
+  transition: var(--garl-transition);
+  margin: .25rem;
+}
+.garl-suggestion-chip:hover {
+  background: var(--bs-primary);
+  color: #fff;
+}
+
+/* Disclaimer */
+.garl-chat-disclaimer {
+  font-size: .7rem;
+  color: var(--garl-text-muted);
+  text-align: center;
+  margin-top: .5rem;
+}
+
+/* Scrollbar in messages */
+.garl-chat-messages::-webkit-scrollbar { width: 4px; }
+.garl-chat-messages::-webkit-scrollbar-thumb { background: rgba(201,162,39,.3); border-radius: 2px; }
+
+/* Mobile */
+@media (max-width: 767px) {
+  .garl-chat-wrapper { height: calc(100vh - 100px); border-radius: 0; }
+  .garl-chat-bubble  { max-width: 90%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4 py-4">
+
+  <div class="garl-chat-wrapper shadow rounded">
+
+    <!-- ── HEADER ── -->
+    <div class="garl-chat-header">
+      <div class="d-flex align-items-center gap-3">
+        <div class="garl-chat-ai-avatar" aria-hidden="true">
+          <i class="bi bi-robot"></i>
+        </div>
+        <div>
+          <div class="fw-bold fs-6">{% trans "GARL AI Assistant" %}</div>
+          <div class="garl-chat-status">
+            <span class="garl-chat-status-dot" aria-hidden="true"></span>
+            {% trans "Online — answers based on GARL's content" %}
+          </div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-xs btn-outline-light" id="clearChatBtn" title="{% trans 'Clear conversation' %}">
+          <i class="bi bi-trash3 me-1"></i>{% trans "Clear" %}
+        </button>
+        <a href="{% url 'support:home' %}" class="btn btn-xs btn-garl-gold">
+          <i class="bi bi-headset me-1"></i>{% trans "Human Support" %}
+        </a>
+      </div>
+    </div>
+
+    <!-- ── MESSAGES ── -->
+    <div class="garl-chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="{% trans 'Chat messages' %}">
+
+      <!-- Welcome message -->
+      {% if not history %}
+      <div class="garl-chat-msg garl-chat-msg--assistant" id="welcomeMsg">
+        <div class="garl-chat-msg-avatar" aria-hidden="true"><i class="bi bi-robot"></i></div>
+        <div>
+          <div class="garl-chat-bubble">
+            <strong>{% trans "Hello! I'm GARL's AI Assistant." %}</strong> 👋
+            <br /><br />
+            {% trans "I can help you with questions about:" %}
+            <ul class="mt-2 mb-1" style="padding-left:1.2rem;">
+              <li>{% trans "Finding research papers, books, and journals" %}</li>
+              <li>{% trans "How to submit publications or research" %}</li>
+              <li>{% trans "Course enrollment and certificates" %}</li>
+              <li>{% trans "Health science resources" %}</li>
+              <li>{% trans "Events, institutions, and researchers" %}</li>
+              <li>{% trans "Account, registration, and platform features" %}</li>
+            </ul>
+            {% trans "What would you like to know?" %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Chat history -->
+      {% for msg in history %}
+      <div class="garl-chat-msg garl-chat-msg--{{ msg.role }}" data-msg-id="{{ msg.pk }}">
+        <div class="garl-chat-msg-avatar" aria-hidden="true">
+          {% if msg.role == 'assistant' %}<i class="bi bi-robot"></i>
+          {% else %}<i class="bi bi-person-fill"></i>{% endif %}
+        </div>
+        <div class="garl-chat-msg-body">
+          <div class="garl-chat-bubble" id="bubble-{{ msg.pk }}">{{ msg.content|linebreaksbr }}</div>
+
+          {% if msg.role == 'assistant' %}
+          <!-- Sources -->
+          {% if msg.sources %}
+          <div class="garl-chat-sources">
+            {% for src in msg.sources|slice:":5" %}
+            <a href="{{ src.url }}" class="garl-chat-source-chip" title="{{ src.title }}">
+              <i class="bi {% if src.type == 'course' %}bi-mortarboard{% elif src.type == 'paper' or src.type == 'publication' %}bi-file-earmark-text{% elif src.type == 'event' %}bi-calendar-event{% elif src.type == 'health' %}bi-heart-pulse{% elif src.type == 'innovation' %}bi-lightbulb{% elif src.type == 'book' %}bi-book{% else %}bi-link-45deg{% endif %} me-1"></i>
+              {{ src.title|truncatechars:30 }}
+            </a>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Confidence + feedback -->
+          <div class="d-flex align-items-center flex-wrap gap-2 mt-1">
+            {% if msg.confidence %}
+            <span class="garl-chat-confidence garl-chat-confidence--{{ msg.confidence }}">
+              <i class="bi bi-circle-fill me-1" style="font-size:.5rem;"></i>
+              {% if msg.confidence == 'high' %}{% trans "High confidence" %}
+              {% elif msg.confidence == 'medium' %}{% trans "Medium confidence" %}
+              {% else %}{% trans "Low confidence — try rephrasing" %}{% endif %}
+            </span>
+            {% endif %}
+            <div class="garl-chat-feedback" data-msg="{{ msg.pk }}">
+              <span class="garl-chat-feedback-label" style="font-size:.7rem;color:var(--garl-text-muted);">{% trans "Helpful?" %}</span>
+              <button class="garl-feedback-btn" data-rating="helpful" aria-label="{% trans 'Mark as helpful' %}">👍</button>
+              <button class="garl-feedback-btn garl-feedback-btn--bad" data-rating="unhelpful" aria-label="{% trans 'Mark as not helpful' %}">👎</button>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Typing indicator -->
+      <div class="garl-typing-indicator" id="typingIndicator" aria-label="{% trans 'AI is typing' %}">
+        <div class="garl-chat-msg-avatar" aria-hidden="true" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--garl-gold),var(--garl-gold-dark));display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#fff;">
+          <i class="bi bi-robot"></i>
+        </div>
+        <div class="garl-typing-dots">
+          <div class="garl-typing-dot"></div>
+          <div class="garl-typing-dot"></div>
+          <div class="garl-typing-dot"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── SUGGESTIONS (shown only when no history) ── -->
+    {% if not history %}
+    <div class="garl-chat-suggestions" id="suggestionsArea">
+      <div class="px-1 pb-1" style="font-size:.78rem;color:var(--garl-text-muted);">
+        <i class="bi bi-lightbulb me-1"></i>{% trans "Try asking:" %}
+      </div>
+      {% for s in suggestions %}
+      <button class="garl-suggestion-chip" data-question="{{ s }}">{{ s }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── INPUT AREA ── -->
+    <div class="garl-chat-input-area">
+      <form class="garl-chat-form" id="chatForm" novalidate>
+        {% csrf_token %}
+        <textarea
+          class="garl-chat-textarea"
+          id="chatInput"
+          placeholder="{% trans 'Ask anything about GARL...' %}"
+          rows="1"
+          maxlength="1000"
+          aria-label="{% trans 'Type your message' %}"
+          autocomplete="off"
+        ></textarea>
+        <button type="submit" class="garl-chat-send-btn" id="sendBtn"
+                aria-label="{% trans 'Send message' %}" disabled>
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </form>
+      <div class="garl-chat-disclaimer">
+        {% trans "AI answers are based on GARL's content. For urgent issues," %}
+        <a href="{% url 'support:create_ticket' %}" class="garl-text-gold">{% trans "open a support ticket" %}</a>.
+      </div>
+    </div>
+
+  </div><!-- /.garl-chat-wrapper -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+
+  const messagesEl   = document.getElementById('chatMessages');
+  const chatForm     = document.getElementById('chatForm');
+  const chatInput    = document.getElementById('chatInput');
+  const sendBtn      = document.getElementById('sendBtn');
+  const typingEl     = document.getElementById('typingIndicator');
+  const clearBtn     = document.getElementById('clearChatBtn');
+  const suggestArea  = document.getElementById('suggestionsArea');
+
+  const SEND_URL     = "{% url 'ai_support:send' %}";
+  const FEEDBACK_URL = "{% url 'ai_support:feedback' message_id=0 %}".replace('/0/', '/');
+  const CLEAR_URL    = "{% url 'ai_support:clear' %}";
+  const CSRF_TOKEN   = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  // ── Auto-resize textarea ──────────────────────────────────────────────────
+  chatInput.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    sendBtn.disabled  = this.value.trim().length === 0;
+  });
+
+  // ── Send on Enter (Shift+Enter = new line) ────────────────────────────────
+  chatInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) chatForm.dispatchEvent(new Event('submit'));
+    }
+  });
+
+  // ── Suggestion chips ──────────────────────────────────────────────────────
+  document.querySelectorAll('.garl-suggestion-chip').forEach(chip => {
+    chip.addEventListener('click', function () {
+      chatInput.value = this.dataset.question;
+      chatInput.style.height = 'auto';
+      sendBtn.disabled = false;
+      chatForm.dispatchEvent(new Event('submit'));
+    });
+  });
+
+  // ── Append a message bubble to the chat ───────────────────────────────────
+  function appendMessage(role, content, msgId, sources, confidence, enhanced) {
+    const wrap = document.createElement('div');
+    wrap.className = `garl-chat-msg garl-chat-msg--${role}`;
+    if (msgId) wrap.dataset.msgId = msgId;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'garl-chat-msg-avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+    avatar.innerHTML = role === 'assistant'
+      ? '<i class="bi bi-robot"></i>'
+      : '<i class="bi bi-person-fill"></i>';
+
+    const body = document.createElement('div');
+    body.className = 'garl-chat-msg-body';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'garl-chat-bubble';
+    bubble.id = msgId ? `bubble-${msgId}` : '';
+
+    // Render simple markdown (bold, bullets)
+    bubble.innerHTML = renderMarkdown(content);
+    body.appendChild(bubble);
+
+    if (role === 'assistant') {
+      // Sources
+      if (sources && sources.length > 0) {
+        const srcDiv = document.createElement('div');
+        srcDiv.className = 'garl-chat-sources';
+        const typeIcons = {
+          course: 'bi-mortarboard', paper: 'bi-file-earmark-text',
+          publication: 'bi-file-earmark-text', event: 'bi-calendar-event',
+          health: 'bi-heart-pulse', innovation: 'bi-lightbulb',
+          book: 'bi-book', faq: 'bi-question-circle',
+        };
+        sources.slice(0, 5).forEach(s => {
+          const icon = typeIcons[s.type] || 'bi-link-45deg';
+          const chip = document.createElement('a');
+          chip.href = s.url || '#';
+          chip.className = 'garl-chat-source-chip';
+          chip.title = s.title || '';
+          chip.innerHTML = `<i class="bi ${icon} me-1"></i>${truncate(s.title || '', 30)}`;
+          srcDiv.appendChild(chip);
+        });
+        body.appendChild(srcDiv);
+      }
+
+      // Confidence + feedback row
+      const metaRow = document.createElement('div');
+      metaRow.className = 'd-flex align-items-center flex-wrap gap-2 mt-1';
+
+      if (confidence) {
+        const confLabels = { high: 'High confidence', medium: 'Medium confidence', low: 'Low confidence — try rephrasing' };
+        const confEl = document.createElement('span');
+        confEl.className = `garl-chat-confidence garl-chat-confidence--${confidence}`;
+        confEl.innerHTML = `<i class="bi bi-circle-fill me-1" style="font-size:.5rem;"></i>${confLabels[confidence] || ''}`;
+        metaRow.appendChild(confEl);
+      }
+
+      if (msgId) {
+        const fbDiv = document.createElement('div');
+        fbDiv.className = 'garl-chat-feedback';
+        fbDiv.dataset.msg = msgId;
+        fbDiv.innerHTML = `
+          <span class="garl-chat-feedback-label" style="font-size:.7rem;color:var(--garl-text-muted);">Helpful?</span>
+          <button class="garl-feedback-btn" data-rating="helpful" aria-label="Mark as helpful">👍</button>
+          <button class="garl-feedback-btn garl-feedback-btn--bad" data-rating="unhelpful" aria-label="Not helpful">👎</button>`;
+        metaRow.appendChild(fbDiv);
+      }
+
+      body.appendChild(metaRow);
+    }
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(body);
+    messagesEl.insertBefore(wrap, typingEl);
+    scrollToBottom();
+    return wrap;
+  }
+
+  // ── Simple Markdown renderer (bold + line breaks + bullets) ──────────────
+  function renderMarkdown(text) {
+    return text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.*?)__/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/^  •\s+(.+)$/gm, '<li style="margin-left:.5rem;list-style:disc inside">$1</li>')
+      .replace(/(<li.*<\/li>(\n|$))+/g, m => `<ul style="padding-left:.5rem;margin:.4rem 0;">${m}</ul>`)
+      .replace(/\n\n/g, '<br /><br />')
+      .replace(/\n/g, '<br />');
+  }
+
+  function truncate(str, n) {
+    return str.length > n ? str.slice(0, n) + '…' : str;
+  }
+
+  function scrollToBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function showTyping() { typingEl.classList.add('show'); scrollToBottom(); }
+  function hideTyping() { typingEl.classList.remove('show'); }
+
+  // ── Submit message ────────────────────────────────────────────────────────
+  chatForm.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const question = chatInput.value.trim();
+    if (!question) return;
+
+    // Hide suggestions
+    if (suggestArea) suggestArea.style.display = 'none';
+    // Remove welcome message if still showing
+    const welcome = document.getElementById('welcomeMsg');
+    if (welcome) welcome.remove();
+
+    // Append user message
+    appendMessage('user', question, null, [], '', false);
+
+    // Reset input
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    chatInput.disabled = true;
+
+    showTyping();
+
+    try {
+      const resp = await fetch(SEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken':  CSRF_TOKEN,
+        },
+        body: JSON.stringify({ message: question }),
+      });
+
+      const data = await resp.json();
+      hideTyping();
+
+      if (resp.ok) {
+        appendMessage('assistant', data.answer, data.message_id, data.sources, data.confidence, data.enhanced);
+      } else {
+        appendMessage('assistant',
+          data.error || '{% trans "Sorry, something went wrong. Please try again." %}',
+          null, [], 'low', false
+        );
+      }
+    } catch (err) {
+      hideTyping();
+      appendMessage('assistant',
+        '{% trans "I could not connect right now. Please check your connection and try again." %}',
+        null, [], 'low', false
+      );
+    } finally {
+      chatInput.disabled = false;
+      chatInput.focus();
+    }
+  });
+
+  // ── Feedback buttons (delegated) ──────────────────────────────────────────
+  messagesEl.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.garl-feedback-btn');
+    if (!btn) return;
+
+    const fbDiv  = btn.closest('.garl-chat-feedback');
+    const msgId  = fbDiv?.dataset.msg;
+    const rating = btn.dataset.rating;
+    if (!msgId || !rating) return;
+
+    // Mark active
+    fbDiv.querySelectorAll('.garl-feedback-btn').forEach(b => b.classList.remove('garl-feedback-btn--active'));
+    btn.classList.add('garl-feedback-btn--active');
+
+    try {
+      await fetch(`${FEEDBACK_URL}${msgId}/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+        body: JSON.stringify({ rating }),
+      });
+    } catch { /* silent */ }
+  });
+
+  // ── Clear chat ────────────────────────────────────────────────────────────
+  clearBtn?.addEventListener('click', async function () {
+    if (!confirm('{% trans "Clear this conversation?" %}')) return;
+    try {
+      await fetch(CLEAR_URL, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': CSRF_TOKEN },
+      });
+      // Reload the page to reset the UI
+      window.location.reload();
+    } catch { /* silent */ }
+  });
+
+  // Scroll to bottom on load
+  scrollToBottom();
+})();
+</script>
+{% endblock %}

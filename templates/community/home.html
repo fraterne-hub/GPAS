@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Community & Directory" %}{% endblock %}
+{% block content %}
+<div class="garl-module-hero" style="background:linear-gradient(135deg,#0d2b1a,#198754);">
+  <div class="container-fluid px-4 py-5">
+    <h1 class="display-5 fw-bold text-white mb-3"><i class="bi bi-people me-3 garl-text-gold"></i>{% trans "Community & Directory" %}</h1>
+    <p class="lead text-white-50 mb-4">{% trans "Connect with universities, researchers, libraries, and academic networks worldwide." %}</p>
+    <div class="d-flex flex-wrap gap-3">
+      <a href="{% url 'community:institution_list' %}" class="btn btn-garl-gold btn-lg"><i class="bi bi-building me-2"></i>{% trans "Find Institutions" %}</a>
+      <a href="{% url 'community:researcher_list' %}" class="btn btn-outline-light btn-lg"><i class="bi bi-person-workspace me-2"></i>{% trans "Find Researchers" %}</a>
+    </div>
+  </div>
+</div>
+<div class="container-fluid px-4 py-5">
+  <!-- Quick links -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-3 col-6">
+      <a href="{% url 'community:institution_list' %}" class="garl-center-card garl-center-card--community d-block text-decoration-none text-center p-3">
+        <i class="bi bi-building fs-2 text-success mb-2 d-block"></i>
+        <div class="fw-bold">{% trans "Institutions" %}</div>
+      </a>
+    </div>
+    <div class="col-md-3 col-6">
+      <a href="{% url 'community:researcher_list' %}" class="garl-center-card garl-center-card--community d-block text-decoration-none text-center p-3">
+        <i class="bi bi-person-workspace fs-2 text-success mb-2 d-block"></i>
+        <div class="fw-bold">{% trans "Researchers" %}</div>
+      </a>
+    </div>
+    <div class="col-md-3 col-6">
+      <a href="{% url 'events:list' %}" class="garl-center-card garl-center-card--community d-block text-decoration-none text-center p-3">
+        <i class="bi bi-calendar-event fs-2 text-success mb-2 d-block"></i>
+        <div class="fw-bold">{% trans "Events" %}</div>
+      </a>
+    </div>
+    <div class="col-md-3 col-6">
+      <a href="{% url 'research:project_list' %}" class="garl-center-card garl-center-card--community d-block text-decoration-none text-center p-3">
+        <i class="bi bi-diagram-3 fs-2 text-success mb-2 d-block"></i>
+        <div class="fw-bold">{% trans "Collaborations" %}</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Featured Institutions -->
+  {% if institutions %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-building me-2 garl-text-gold"></i>{% trans "Featured Institutions" %}</h2>
+    <a href="{% url 'community:institution_list' %}" class="btn btn-outline-success btn-sm">{% trans "All Institutions" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-4 mb-5">
+    {% for inst in institutions %}
+    <div class="col-lg-3 col-md-4 col-sm-6">
+      <div class="garl-card p-3 h-100 text-center">
+        {% if inst.logo %}<img src="{{ inst.logo.url }}" alt="{{ inst.name }}" style="height:64px;object-fit:contain;" class="mb-3" />
+        {% else %}<div class="garl-avatar-lg garl-avatar-initials rounded-circle mx-auto mb-3">{{ inst.name|first }}</div>{% endif %}
+        <h6 class="garl-clamp-2 mb-1"><a href="{% url 'community:institution_detail' inst.slug %}" class="garl-link-dark">{{ inst.name }}</a></h6>
+        {% if inst.city or inst.country %}<small class="text-muted"><i class="bi bi-geo-alt me-1"></i>{{ inst.city }}{% if inst.city and inst.country %}, {% endif %}{{ inst.country }}</small>{% endif %}
+        {% if inst.is_verified %}<div class="mt-2"><span class="badge bg-success-subtle text-success-emphasis"><i class="bi bi-patch-check me-1"></i>{% trans "Verified" %}</span></div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Researchers -->
+  {% if researchers %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-person-workspace me-2 garl-text-gold"></i>{% trans "Researchers" %}</h2>
+    <a href="{% url 'community:researcher_list' %}" class="btn btn-outline-success btn-sm">{% trans "All Researchers" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-3">
+    {% for researcher in researchers %}
+    <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+      <div class="garl-card p-3 text-center">
+        {% if researcher.profile.avatar %}<img src="{{ researcher.profile.avatar.url }}" class="rounded-circle mb-2" width="60" height="60" style="object-fit:cover;" alt="{{ researcher.get_full_name }}" />
+        {% else %}<div class="garl-avatar-md garl-avatar-initials rounded-circle mx-auto mb-2">{{ researcher.first_name|first }}{{ researcher.last_name|first }}</div>{% endif %}
+        <h6 class="garl-clamp-2 small mb-1"><a href="{% url 'accounts:public_profile' researcher.username %}" class="garl-link-dark">{{ researcher.get_full_name }}</a></h6>
+        {% if researcher.profile.institution %}<small class="text-muted garl-clamp-1">{{ researcher.profile.institution }}</small>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load i18n humanize %}
+{% block title %}{% trans "Publisher Earnings" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="garl-welcome-banner mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <h4 class="text-white mb-1">{% trans "Publisher Dashboard" %}</h4>
+        <p class="text-white-50 mb-0">{{ request.user.get_full_name }} &mdash; {% trans "Earnings & Revenue" %}</p>
+      </div>
+      <div class="text-end">
+        <div class="text-white-50 small">{% trans "Your share" %}</div>
+        <div class="garl-text-gold fw-bold fs-4">{{ publisher_pct }}%</div>
+        <div class="text-white-50 small">{% trans "of every sale" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--green">
+        <div class="garl-admin-stat-number">USD {{ earnings.publisher_paid|floatformat:2 }}</div>
+        <div class="garl-admin-stat-label">{% trans "Total Earned (60%)" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--gold">
+        <div class="garl-admin-stat-number">USD {{ earnings.pending_payout|floatformat:2 }}</div>
+        <div class="garl-admin-stat-label">{% trans "Pending Payout" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--blue">
+        <div class="garl-admin-stat-number">{{ earnings.total_sales }}</div>
+        <div class="garl-admin-stat-label">{% trans "Total Sales" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--teal">
+        <div class="garl-admin-stat-number">USD {{ earnings.total_paid_out|floatformat:2 }}</div>
+        <div class="garl-admin-stat-label">{% trans "Total Paid Out" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Revenue split info -->
+    <div class="col-12">
+      <div class="garl-card p-4 mb-2">
+        <h6 class="fw-bold mb-3">{% trans "Revenue Split" %}</h6>
+        <div class="progress mb-2" style="height:28px;border-radius:6px;">
+          <div class="progress-bar bg-success" style="width:60%;" role="progressbar">
+            <span class="fw-bold">{% trans "You" %} — 60%</span>
+          </div>
+          <div class="progress-bar" style="width:40%;background:var(--garl-gold);" role="progressbar">
+            <span class="fw-bold">{% trans "Platform" %} — 40%</span>
+          </div>
+        </div>
+        <p class="text-muted small mb-0">
+          {% trans "For every sale, you receive 60% of the price and GARL platform keeps 40% as a service fee." %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Content performance -->
+    {% if content_stats %}
+    <div class="col-lg-6">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-bar-chart me-2 text-success"></i>{% trans "Sales by Content" %}</h6>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead><tr><th>{% trans "Content" %}</th><th>{% trans "Sales" %}</th><th>{% trans "Your Earnings" %}</th></tr></thead>
+            <tbody>
+              {% for row in content_stats %}
+              <tr>
+                <td class="small garl-clamp-1" style="max-width:180px;">{{ row.content_title }}</td>
+                <td>{{ row.sale_count }}</td>
+                <td class="text-success fw-bold">USD {{ row.total_earned|floatformat:2 }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Request payout -->
+    <div class="col-lg-6">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-wallet2 me-2 text-warning"></i>{% trans "Request Payout" %}</h6>
+        </div>
+        <div class="p-3">
+          {% if earnings.pending_payout > 0 %}
+          <div class="alert alert-success mb-3">
+            <strong>USD {{ earnings.pending_payout|floatformat:2 }}</strong> {% trans "is available for withdrawal." %}
+          </div>
+          <form method="post" action="{% url 'payments:request_payout' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-medium">{% trans "Payment Details" %} <span class="text-danger">*</span></label>
+              <textarea name="payment_details" class="form-control" rows="3"
+                        placeholder="{% trans 'Enter your bank account, mobile money number, or PayPal email where we should send your payment.' %}"
+                        required></textarea>
+              <div class="form-text">{% trans "We support bank transfer, mobile money (MTN, Airtel, etc.), and PayPal." %}</div>
+            </div>
+            <button type="submit" class="btn btn-garl-gold w-100"
+                    onclick="return confirm('{% trans 'Request payout of USD' %} {{ earnings.pending_payout|floatformat:2 }}?')">
+              <i class="bi bi-send me-2"></i>{% trans "Request Payout" %}
+            </button>
+          </form>
+          {% else %}
+          <div class="garl-empty-state text-center py-3">
+            <i class="bi bi-wallet2 fs-2 text-muted mb-2 d-block"></i>
+            <p class="text-muted small">{% trans "No pending balance. Earnings appear here after sales." %}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Payout history -->
+      {% if payouts %}
+      <div class="garl-dashboard-card mt-3">
+        <div class="garl-dashboard-card-header"><h6 class="mb-0">{% trans "Payout History" %}</h6></div>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>{% trans "Amount" %}</th><th>{% trans "Status" %}</th><th>{% trans "Date" %}</th></tr></thead>
+            <tbody>
+              {% for po in payouts %}
+              <tr>
+                <td>USD {{ po.amount|floatformat:2 }}</td>
+                <td><span class="badge garl-status-badge garl-status-{{ po.status }}">{{ po.get_status_display }}</span></td>
+                <td><small class="text-muted">{{ po.requested_at|date:"M d, Y" }}</small></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="col-12">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>{% trans "Recent Sales" %}</h6>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead><tr><th>{% trans "Buyer" %}</th><th>{% trans "Sale Price" %}</th><th>{% trans "Your Cut (60%)" %}</th><th>{% trans "Date" %}</th></tr></thead>
+            <tbody>
+              {% for p in purchases %}
+              <tr>
+                <td>{{ p.buyer.get_full_name|default:p.buyer.username }}</td>
+                <td>{{ p.currency }} {{ p.amount|floatformat:2 }}</td>
+                <td class="text-success fw-bold">{{ p.currency }} {{ p.publisher_amount|floatformat:2 }}</td>
+                <td><small class="text-muted">{{ p.completed_at|date:"M d, Y" }}</small></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-muted text-center py-3">{% trans "No sales yet." %}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

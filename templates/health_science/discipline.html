@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ disc_label }}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'health_science:home' %}">{% trans "Health Science" %}</a></li>
+    <li class="breadcrumb-item active">{{ disc_label }}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <!-- Header -->
+  <div class="garl-card p-4 mb-4 d-flex align-items-center gap-4">
+    <div style="font-size:3.5rem;color:var(--bs-danger);">
+      {% if discipline == 'nursing' %}<i class="bi bi-person-badge"></i>
+      {% elif discipline == 'medicine' %}<i class="bi bi-heart-pulse"></i>
+      {% elif discipline == 'midwifery' %}<i class="bi bi-person-hearts"></i>
+      {% elif discipline == 'pharmacy' %}<i class="bi bi-capsule"></i>
+      {% elif discipline == 'dentistry' %}<i class="bi bi-emoji-smile"></i>
+      {% elif discipline == 'public_health' %}<i class="bi bi-shield-check"></i>
+      {% elif discipline == 'biomedical' %}<i class="bi bi-flask"></i>
+      {% else %}<i class="bi bi-clipboard2-pulse"></i>{% endif %}
+    </div>
+    <div>
+      <h2 class="mb-1">{{ disc_label }}</h2>
+      <p class="text-muted mb-0">{% trans "Educational and research resources for" %} {{ disc_label|lower }}.</p>
+      <div class="alert alert-warning p-2 mt-2 mb-0 d-inline-flex small">
+        <i class="bi bi-exclamation-triangle me-2"></i>{% trans "For educational purposes only." %}
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+      {% if categories %}
+      <div class="garl-card p-3 mb-3">
+        <h6 class="fw-bold mb-3">{% trans "Categories" %}</h6>
+        <ul class="list-unstyled">
+          {% for cat in categories %}
+          <li class="mb-1">
+            <a href="{% url 'health_science:resource_list' %}?category={{ cat.pk }}" class="garl-link-primary small">
+              <i class="bi bi-chevron-right me-1"></i>{{ cat.name }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3">{% trans "Other Disciplines" %}</h6>
+        {% for d_key, d_label in disciplines_all %}
+        {% if d_key != discipline %}
+        <a href="{% url 'health_science:discipline' d_key %}" class="d-block garl-link-primary small mb-2">
+          <i class="bi bi-arrow-right me-1"></i>{{ d_label }}
+        </a>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Resources -->
+    <div class="col-lg-9">
+      <form method="get" class="mb-3 d-flex gap-2">
+        <input type="search" name="q" class="form-control" value="{{ q }}" placeholder="{% trans 'Search' %} {{ disc_label|lower }}{% trans ' resources...' %}" />
+        <button type="submit" class="btn btn-garl-gold"><i class="bi bi-search"></i></button>
+      </form>
+
+      {% if page_obj %}
+      <div class="row g-3">
+        {% for res in page_obj %}
+        <div class="col-md-6">
+          <div class="garl-card p-3 h-100">
+            <div class="d-flex gap-2 mb-2">
+              <span class="badge bg-secondary">{{ res.get_resource_type_display }}</span>
+            </div>
+            <h6 class="garl-clamp-2 mb-2"><a href="{% url 'health_science:resource_detail' res.slug %}" class="garl-link-dark">{{ res.title }}</a></h6>
+            <p class="small text-muted garl-clamp-2 mb-2">{{ res.description|truncatewords:20 }}</p>
+            <div class="d-flex align-items-center justify-content-between mt-auto">
+              {% if res.author %}<small class="text-muted"><i class="bi bi-person me-1"></i>{{ res.author|truncatechars:25 }}</small>{% else %}<span></span>{% endif %}
+              {% if res.file or res.external_url %}
+              <a href="{% url 'health_science:download' res.pk %}" class="btn btn-xs btn-outline-danger"><i class="bi bi-download me-1"></i>{% trans "Get" %}</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if page_obj.has_other_pages %}
+      <nav class="mt-4"><ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ page_obj.number }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+      </ul></nav>
+      {% endif %}
+      {% else %}
+      <div class="garl-empty-state text-center py-5">
+        <i class="bi bi-heart-pulse fs-1 text-muted mb-3 d-block"></i>
+        <h5>{% trans "No resources found" %}</h5>
+        <a href="{% url 'health_science:resource_list' %}" class="btn btn-outline-danger mt-2">{% trans "Browse All Health Resources" %}</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Frequently Asked Questions" %}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3><i class="bi bi-question-circle me-2 garl-text-gold"></i>{% trans "FAQs" %}</h3>
+    <a href="{% url 'support:create_ticket' %}" class="btn btn-sm btn-garl-gold"><i class="bi bi-ticket me-1"></i>{% trans "Open a Ticket" %}</a>
+  </div>
+  {% for cat in categories %}
+  {% if cat.faqs.all %}
+  <div class="mb-5">
+    <h5 class="fw-bold text-primary mb-3">{{ cat.name }}</h5>
+    <div class="accordion" id="faqCat{{ cat.pk }}">
+      {% for faq in cat.faqs.all %}
+      <div class="accordion-item garl-card mb-2 border-0">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed fw-medium" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#faq{{ faq.pk }}"
+                  aria-expanded="false" aria-controls="faq{{ faq.pk }}">
+            {{ faq.question }}
+          </button>
+        </h2>
+        <div id="faq{{ faq.pk }}" class="accordion-collapse collapse">
+          <div class="accordion-body text-muted">{{ faq.answer }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% if not categories %}
+  <div class="garl-empty-state text-center py-5"><i class="bi bi-question-circle fs-1 text-muted mb-3 d-block"></i><h5>{% trans "No FAQs available yet." %}</h5></div>
+  {% endif %}
+</div>
+{% endblock %}

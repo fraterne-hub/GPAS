@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Submit Publication" %}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="garl-card p-4">
+        <h3 class="mb-4"><i class="bi bi-upload me-2 garl-text-gold"></i>{% trans "Submit a Publication" %}</h3>
+        <div class="alert alert-info mb-4">
+          <i class="bi bi-info-circle me-2"></i>
+          {% trans "Your submission will go through editorial screening and peer review before publication. You can track the status in your dashboard." %}
+        </div>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {% for field in form %}
+          <div class="mb-3">
+            <label class="form-label fw-medium">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+            {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>{% endif %}
+          </div>
+          {% endfor %}
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-garl-gold btn-lg"><i class="bi bi-send me-2"></i>{% trans "Submit Publication" %}</button>
+            <a href="{% url 'publishing:my_submissions' %}" class="btn btn-outline-secondary btn-lg">{% trans "My Submissions" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

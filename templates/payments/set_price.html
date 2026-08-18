@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Set Content Price" %}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="garl-card p-4">
+        <h4 class="mb-4"><i class="bi bi-tag me-2 garl-text-gold"></i>{% trans "Set Content Price" %}</h4>
+        <div class="p-3 rounded mb-4" style="background:var(--garl-off-white);border-left:4px solid var(--garl-gold);">
+          <div class="text-muted small mb-1">{% trans "CONTENT" %}</div>
+          <div class="fw-bold">{{ content_title }}</div>
+          <div class="text-muted small">{{ content_type|title }} #{{ object_id }}</div>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" name="is_free" id="isFree"
+                     {% if price_obj.is_free %}checked{% endif %}
+                     onchange="document.getElementById('priceFields').classList.toggle('d-none', this.checked)" />
+              <label class="form-check-label fw-medium" for="isFree">{% trans "Free / Open Access" %}</label>
+            </div>
+          </div>
+
+          <div id="priceFields" {% if price_obj.is_free %}class="d-none"{% endif %}>
+            <div class="row g-3 mb-3">
+              <div class="col-8">
+                <label class="form-label fw-medium">{% trans "Price" %}</label>
+                <input type="number" name="price" class="form-control" step="0.01" min="0.00"
+                       value="{{ price_obj.price }}" placeholder="e.g. 9.99" />
+              </div>
+              <div class="col-4">
+                <label class="form-label fw-medium">{% trans "Currency" %}</label>
+                <select name="currency" class="form-select">
+                  <option value="USD" {% if price_obj.currency == 'USD' %}selected{% endif %}>USD</option>
+                  <option value="EUR" {% if price_obj.currency == 'EUR' %}selected{% endif %}>EUR</option>
+                  <option value="GBP" {% if price_obj.currency == 'GBP' %}selected{% endif %}>GBP</option>
+                  <option value="NGN" {% if price_obj.currency == 'NGN' %}selected{% endif %}>NGN</option>
+                  <option value="GHS" {% if price_obj.currency == 'GHS' %}selected{% endif %}>GHS</option>
+                  <option value="KES" {% if price_obj.currency == 'KES' %}selected{% endif %}>KES</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Revenue split preview -->
+            <div class="alert alert-info small mb-3">
+              <strong>{% trans "Revenue split:" %}</strong>
+              <span class="text-success ms-2">{% trans "Publisher gets 60%" %}</span> &nbsp;•&nbsp;
+              <span class="garl-text-gold">{% trans "Platform keeps 40%" %}</span>
+              <div id="splitPreview" class="mt-1 fw-medium"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">{% trans "Publisher User ID" %} <span class="text-muted small">({% trans "optional — defaults to you" %})</span></label>
+            <input type="number" name="owner_id" class="form-control" value="{{ price_obj.owner.pk }}" />
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-garl-gold">
+              <i class="bi bi-save me-2"></i>{% trans "Save Price" %}
+            </button>
+            <a href="{% url 'payments:admin_revenue' %}" class="btn btn-outline-secondary">{% trans "Cancel" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const priceInput = document.querySelector('[name=price]');
+const preview = document.getElementById('splitPreview');
+function updatePreview() {
+  const p = parseFloat(priceInput?.value || 0);
+  if (p > 0) {
+    const pub = (p * 0.60).toFixed(2);
+    const plat = (p * 0.40).toFixed(2);
+    preview.innerHTML = `Publisher: <strong class="text-success">${pub}</strong> &nbsp;|&nbsp; Platform: <strong style="color:var(--garl-gold)">${plat}</strong>`;
+  } else {
+    preview.textContent = '';
+  }
+}
+priceInput?.addEventListener('input', updatePreview);
+updatePreview();
+</script>
+{% endblock %}

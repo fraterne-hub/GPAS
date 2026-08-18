@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}400 — {% trans "Bad Request" %}{% endblock %}
+{% block content %}
+<div class="container text-center py-5">
+  <div class="garl-error-page">
+    <div class="garl-error-code">400</div>
+    <h2 class="garl-error-title">{% trans "Bad Request" %}</h2>
+    <p class="garl-error-desc text-muted">{% trans "The request could not be understood. Please check your input and try again." %}</p>
+    <a href="{% url 'core:home' %}" class="btn btn-garl-gold mt-4"><i class="bi bi-house me-2"></i>{% trans "Go Home" %}</a>
+  </div>
+</div>
+{% endblock %}

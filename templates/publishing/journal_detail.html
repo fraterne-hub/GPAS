@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ journal.title }}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="garl-card p-4 mb-4">
+    <h2 class="mb-2">{{ journal.title }}</h2>
+    <div class="d-flex flex-wrap gap-3 mb-3">
+      {% if journal.issn %}<span class="badge bg-secondary">ISSN: {{ journal.issn }}</span>{% endif %}
+      {% if journal.is_open_access %}<span class="badge bg-success"><i class="bi bi-unlock-fill me-1"></i>{% trans "Open Access" %}</span>{% endif %}
+    </div>
+    {% if journal.description %}<p>{{ journal.description }}</p>{% endif %}
+    {% if journal.publisher %}<p class="text-muted"><i class="bi bi-building me-2"></i>{{ journal.publisher }}</p>{% endif %}
+  </div>
+  <h4 class="mb-3">{% trans "Issues" %}</h4>
+  {% if issues %}
+  <div class="row g-3">
+    {% for issue in issues %}
+    <div class="col-md-4">
+      <div class="garl-card p-3">
+        <h6>{% trans "Vol." %} {{ issue.volume }}, {% trans "No." %} {{ issue.issue }} ({{ issue.year }})</h6>
+        {% if issue.title %}<p class="small text-muted">{{ issue.title }}</p>{% endif %}
+        {% if issue.published_at %}<small class="text-muted">{{ issue.published_at|date:"M d, Y" }}</small>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted">{% trans "No issues available yet." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

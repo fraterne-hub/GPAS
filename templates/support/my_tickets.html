@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "My Support Tickets" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3><i class="bi bi-clock-history me-2 garl-text-gold"></i>{% trans "My Support Tickets" %}</h3>
+    <a href="{% url 'support:create_ticket' %}" class="btn btn-garl-gold btn-sm"><i class="bi bi-plus me-1"></i>{% trans "New Ticket" %}</a>
+  </div>
+  {% if tickets %}
+  <div class="garl-card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>{% trans "Ticket #" %}</th>
+            <th>{% trans "Subject" %}</th>
+            <th>{% trans "Category" %}</th>
+            <th>{% trans "Priority" %}</th>
+            <th>{% trans "Status" %}</th>
+            <th>{% trans "Created" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ticket in tickets %}
+          <tr>
+            <td><code class="small">{{ ticket.ticket_number }}</code></td>
+            <td class="garl-clamp-1" style="max-width:250px;">{{ ticket.subject }}</td>
+            <td><small>{{ ticket.get_category_display }}</small></td>
+            <td><span class="badge garl-priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+            <td><span class="badge garl-status-badge garl-status-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+            <td><small class="text-muted">{{ ticket.created_at|date:"M d, Y" }}</small></td>
+            <td><a href="{% url 'support:ticket_detail' ticket.pk %}" class="btn btn-xs btn-outline-primary">{% trans "View" %}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="garl-empty-state text-center py-5">
+    <i class="bi bi-ticket fs-1 text-muted mb-3 d-block"></i>
+    <h5>{% trans "No support tickets yet" %}</h5>
+    <a href="{% url 'support:create_ticket' %}" class="btn btn-garl-gold mt-2">{% trans "Open a Ticket" %}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

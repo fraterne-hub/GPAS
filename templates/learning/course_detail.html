@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{{ course.title }}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'learning:course_list' %}">{% trans "Courses" %}</a></li>
+    <li class="breadcrumb-item active">{{ course.title|truncatechars:40 }}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="garl-card p-4">
+        {% if course.cover_image %}<img src="{{ course.cover_image.url }}" alt="{{ course.title }}" class="img-fluid rounded mb-3" style="max-height:300px;object-fit:cover;width:100%;" />{% endif %}
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          <span class="badge garl-badge-level-{{ course.level }}">{{ course.get_level_display }}</span>
+          {% if course.is_free %}<span class="badge bg-success">{% trans "Free" %}</span>{% endif %}
+          {% if course.has_certificate %}<span class="badge bg-warning text-dark"><i class="bi bi-patch-check me-1"></i>{% trans "Certificate" %}</span>{% endif %}
+        </div>
+        <h2 class="mb-3">{{ course.title }}</h2>
+        {% if course.instructor %}<p class="text-muted mb-3"><i class="bi bi-person-badge me-2"></i><strong>{% trans "Instructor:" %}</strong> {{ course.instructor.get_full_name }}</p>{% endif %}
+        <div class="d-flex flex-wrap gap-3 text-muted small mb-4">
+          <span><i class="bi bi-people me-1"></i>{{ course.enrollment_count }} {% trans "enrolled" %}</span>
+          {% if course.duration_hours %}<span><i class="bi bi-clock me-1"></i>{{ course.duration_hours }} {% trans "hours" %}</span>{% endif %}
+          <span><i class="bi bi-translate me-1"></i>{{ course.language }}</span>
+        </div>
+        <h5>{% trans "About This Course" %}</h5>
+        <p>{{ course.description }}</p>
+        {% if course.objectives %}
+        <h5 class="mt-4">{% trans "What You'll Learn" %}</h5>
+        <p>{{ course.objectives }}</p>
+        {% endif %}
+        {% if course.requirements %}
+        <h5 class="mt-4">{% trans "Requirements" %}</h5>
+        <p>{{ course.requirements }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Lessons -->
+      {% if lessons %}
+      <div class="garl-card mt-4">
+        <div class="p-3 border-bottom"><h5 class="mb-0">{% trans "Course Content" %}</h5></div>
+        <div class="list-group list-group-flush">
+          {% for lesson in lessons %}
+          <div class="list-group-item d-flex align-items-center gap-3">
+            <div class="garl-lesson-icon">
+              <i class="bi {% if lesson.content_type == 'video' %}bi-play-circle text-info{% elif lesson.content_type == 'quiz' %}bi-question-circle text-warning{% elif lesson.content_type == 'pdf' %}bi-file-pdf text-danger{% elif lesson.content_type == 'lab' %}bi-flask text-success{% else %}bi-file-text text-primary{% endif %}"></i>
+            </div>
+            <div class="flex-grow-1">
+              {% if is_enrolled %}
+              <a href="{% url 'learning:lesson' course.slug lesson.order %}" class="garl-link-dark fw-medium">{{ lesson.title }}</a>
+              {% else %}
+              <span class="fw-medium {% if not lesson.is_preview %}text-muted{% endif %}">{{ lesson.title }}</span>
+              {% if lesson.is_preview %}<span class="badge bg-info-subtle text-info-emphasis ms-2 small">{% trans "Preview" %}</span>{% endif %}
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              {% if lesson.duration_minutes %}<small class="text-muted">{{ lesson.duration_minutes }}{% trans "min" %}</small>{% endif %}
+              <small class="text-muted"><i class="bi bi-hash"></i>{{ lesson.order }}</small>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="garl-card p-4 sticky-top" style="top:80px;">
+        {% if is_enrolled %}
+        <div class="text-center mb-3">
+          <i class="bi bi-check-circle-fill text-success fs-3 d-block mb-2"></i>
+          <p class="text-muted">{% trans "You are enrolled in this course." %}</p>
+          <div class="mb-3">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+              <span>{% trans "Progress" %}</span><span>{{ enrollment.progress }}%</span>
+            </div>
+            <div class="progress" style="height:8px;"><div class="progress-bar bg-info" style="width:{{ enrollment.progress }}%;"></div></div>
+          </div>
+          {% if lessons %}<a href="{% url 'learning:lesson' course.slug 1 %}" class="btn btn-garl-gold w-100"><i class="bi bi-play-fill me-2"></i>{% if enrollment.progress > 0 %}{% trans "Continue Learning" %}{% else %}{% trans "Start Course" %}{% endif %}</a>{% endif %}
+        </div>
+        {% else %}
+        <form method="post" action="{% url 'learning:enroll' course.slug %}">
+          {% csrf_token %}
+          <div class="d-grid">
+            <button type="submit" class="btn btn-garl-gold btn-lg">
+              <i class="bi bi-mortarboard me-2"></i>
+              {% if course.is_free %}{% trans "Enroll for Free" %}{% else %}{% trans "Enroll Now" %}{% endif %}
+            </button>
+          </div>
+        </form>
+        {% endif %}
+        <hr />
+        <h6 class="fw-bold mb-3">{% trans "Course Includes" %}</h6>
+        <ul class="list-unstyled">
+          <li class="mb-2"><i class="bi bi-collection-play me-2 text-info"></i>{{ lessons|length }} {% trans "lessons" %}</li>
+          {% if course.duration_hours %}<li class="mb-2"><i class="bi bi-clock me-2 text-warning"></i>{{ course.duration_hours }} {% trans "hours content" %}</li>{% endif %}
+          <li class="mb-2"><i class="bi bi-infinity me-2 text-success"></i>{% trans "Lifetime access" %}</li>
+          {% if course.has_certificate %}<li class="mb-2"><i class="bi bi-patch-check me-2 text-warning"></i>{% trans "Certificate of completion" %}</li>{% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

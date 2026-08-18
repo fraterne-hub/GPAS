@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Courses" %}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'learning:home' %}">{% trans "Learning" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Courses" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <!-- Filters -->
+    <div class="col-lg-3">
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2"></i>{% trans "Filter Courses" %}</h6>
+        <form method="get">
+          <div class="mb-3">
+            <input type="search" name="q" class="form-control form-control-sm" value="{{ q }}" placeholder="{% trans 'Search courses...' %}" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Category" %}</label>
+            <select name="category" class="form-select form-select-sm">
+              <option value="">{% trans "All Categories" %}</option>
+              {% for cat in categories %}<option value="{{ cat.pk }}" {% if request.GET.category == cat.pk|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Level" %}</label>
+            <select name="level" class="form-select form-select-sm">
+              <option value="">{% trans "All Levels" %}</option>
+              {% for val, label in levels %}<option value="{{ val }}" {% if request.GET.level == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-sm btn-garl-gold">{% trans "Apply" %}</button>
+            <a href="{% url 'learning:course_list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="col-lg-9">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="mb-0">{% trans "Online Courses" %}{% if q %}<small class="text-muted fs-6 ms-2">— "{{ q }}"</small>{% endif %}</h4>
+      </div>
+      {% if page_obj %}
+      <div class="row g-4">
+        {% for course in page_obj %}
+        <div class="col-lg-4 col-md-6">
+          <div class="garl-card h-100">
+            {% if course.cover_image %}<img src="{{ course.cover_image.url }}" class="card-img-top garl-card-img" alt="{{ course.title }}" loading="lazy" />
+            {% else %}<div class="garl-card-img-placeholder garl-card-img-placeholder--learning"><i class="bi bi-play-circle"></i></div>{% endif %}
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="badge garl-badge-level-{{ course.level }}">{{ course.get_level_display }}</span>
+                {% if course.is_free %}<span class="badge bg-success">{% trans "Free" %}</span>{% endif %}
+              </div>
+              <h6 class="garl-clamp-2 mb-2"><a href="{% url 'learning:course_detail' course.slug %}" class="garl-link-dark">{{ course.title }}</a></h6>
+              <p class="small text-muted garl-clamp-2 mb-2">{{ course.description|truncatewords:20 }}</p>
+              <p class="small text-muted mt-auto mb-1"><i class="bi bi-person me-1"></i>{{ course.instructor.get_full_name|default:"GARL" }}</p>
+              <div class="garl-card-meta">
+                <small class="text-muted"><i class="bi bi-people me-1"></i>{{ course.enrollment_count }}</small>
+                {% if course.duration_hours %}<small class="text-muted ms-2"><i class="bi bi-clock me-1"></i>{{ course.duration_hours }}h</small>{% endif %}
+                {% if course.has_certificate %}<small class="text-warning ms-2"><i class="bi bi-patch-check me-1"></i>{% trans "Cert." %}</small>{% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if page_obj.has_other_pages %}
+      <nav class="mt-4"><ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+      </ul></nav>
+      {% endif %}
+      {% else %}
+      <div class="garl-empty-state text-center py-5">
+        <i class="bi bi-mortarboard fs-1 text-muted mb-3 d-block"></i>
+        <h5>{% trans "No courses found" %}</h5>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

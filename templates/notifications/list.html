@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Notifications" %}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-bell me-2 garl-text-gold"></i>{% trans "Notifications" %}</h3>
+    {% if unread_count > 0 %}
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-check-all me-1"></i>{% trans "Mark all read" %}
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if page_obj %}
+  <div class="garl-notification-list">
+    {% for notif in page_obj %}
+    <div class="garl-notification-item {% if not notif.is_read %}garl-notification-item--unread{% endif %}">
+      <div class="garl-notification-icon garl-notification-type-{{ notif.type }}">
+        <i class="bi bi-{% if 'pub' in notif.type %}journals{% elif 'course' in notif.type or 'enroll' in notif.type %}mortarboard{% elif 'event' in notif.type %}calendar-event{% elif 'support' in notif.type %}headset{% elif 'cert' in notif.type %}award{% elif 'proj' in notif.type %}lightbulb{% else %}bell{% endif %}"></i>
+      </div>
+      <div class="garl-notification-body">
+        <div class="garl-notification-title">{{ notif.title }}</div>
+        <div class="garl-notification-message text-muted small">{{ notif.message }}</div>
+        <div class="garl-notification-time text-muted x-small">{{ notif.created_at|date:"M d, Y H:i" }}</div>
+      </div>
+      <div class="garl-notification-actions">
+        {% if not notif.is_read %}
+        <form method="post" action="{% url 'notifications:mark_read' notif.pk %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-xs btn-outline-secondary" title="{% trans 'Mark as read' %}">
+            <i class="bi bi-check"></i>
+          </button>
+        </form>
+        {% endif %}
+        {% if notif.link %}
+        <a href="{{ notif.link }}" class="btn btn-xs btn-outline-primary ms-1">
+          <i class="bi bi-arrow-right"></i>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <nav class="mt-4" aria-label="{% trans 'Notifications pagination' %}">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a></li>
+      {% endif %}
+      <li class="page-item disabled"><span class="page-link">{% trans "Page" %} {{ page_obj.number }}</span></li>
+      {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" %}</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="garl-empty-state text-center py-5">
+    <i class="bi bi-bell-slash fs-1 text-muted mb-3 d-block"></i>
+    <h5>{% trans "No notifications yet" %}</h5>
+    <p class="text-muted">{% trans "You'll see notifications about publications, courses, events and more here." %}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

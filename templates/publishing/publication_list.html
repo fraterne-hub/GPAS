@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Publications" %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'publishing:home' %}">{% trans "Publishing" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Publications" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <!-- Filters -->
+    <div class="col-lg-3">
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2"></i>{% trans "Filter" %}</h6>
+        <form method="get">
+          <div class="mb-3">
+            <input type="search" name="q" class="form-control form-control-sm" value="{{ q }}" placeholder="{% trans 'Search publications...' %}" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Type" %}</label>
+            <select name="type" class="form-select form-select-sm">
+              <option value="">{% trans "All Types" %}</option>
+              {% for pt in pub_types %}<option value="{{ pt.pk }}" {% if request.GET.type == pt.pk|stringformat:"i" %}selected{% endif %}>{{ pt.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Journal" %}</label>
+            <select name="journal" class="form-select form-select-sm">
+              <option value="">{% trans "All Journals" %}</option>
+              {% for j in journals %}<option value="{{ j.pk }}" {% if request.GET.journal == j.pk|stringformat:"i" %}selected{% endif %}>{{ j.title|truncatechars:30 }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-sm btn-garl-gold">{% trans "Apply" %}</button>
+            <a href="{% url 'publishing:publication_list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="col-lg-9">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="mb-0">{% trans "Publications" %}{% if q %} <small class="text-muted fs-6">— "{{ q }}"</small>{% endif %}</h4>
+        <a href="{% url 'publishing:submit' %}" class="btn btn-sm btn-garl-gold"><i class="bi bi-upload me-1"></i>{% trans "Submit" %}</a>
+      </div>
+
+      {% if page_obj %}
+      <div class="row g-3">
+        {% for pub in page_obj %}
+        <div class="col-12">
+          <div class="garl-card p-3 d-flex gap-3">
+            {% if pub.cover_image %}
+            <img src="{{ pub.cover_image.url }}" alt="{{ pub.title }}" style="width:64px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0;" loading="lazy" />
+            {% else %}
+            <div style="width:64px;height:80px;background:var(--garl-navy-mid);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.5rem;color:var(--garl-gold);">
+              <i class="bi bi-journal-text"></i>
+            </div>
+            {% endif %}
+            <div class="flex-grow-1 min-width-0">
+              <div class="d-flex gap-2 mb-1 flex-wrap">
+                {% if pub.pub_type %}<span class="badge garl-badge-type">{{ pub.pub_type.name }}</span>{% endif %}
+                {% if pub.is_open_access %}<span class="badge bg-success-subtle text-success-emphasis"><i class="bi bi-unlock-fill me-1"></i>{% trans "Open Access" %}</span>{% endif %}
+              </div>
+              <h6 class="mb-1"><a href="{% url 'publishing:publication_detail' pub.slug %}" class="garl-link-dark">{{ pub.title }}</a></h6>
+              <p class="text-muted small garl-clamp-2 mb-2">{{ pub.abstract|truncatewords:25 }}</p>
+              <div class="d-flex flex-wrap gap-3 align-items-center">
+                {% if pub.journal %}<small class="text-muted"><i class="bi bi-journal me-1"></i>{{ pub.journal.title|truncatechars:30 }}</small>{% endif %}
+                <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ pub.published_at|date:"M Y" }}</small>
+                <small class="text-muted ms-auto"><i class="bi bi-eye me-1"></i>{{ pub.view_count }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if page_obj.has_other_pages %}
+      <nav class="mt-4"><ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+      </ul></nav>
+      {% endif %}
+
+      {% else %}
+      <div class="garl-empty-state text-center py-5">
+        <i class="bi bi-journals fs-1 text-muted mb-3 d-block"></i>
+        <h5>{% trans "No publications found" %}</h5>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

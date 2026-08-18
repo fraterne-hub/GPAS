@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% load i18n humanize garl_tags %}
+
+{% block title %}{% trans "Admin Dashboard" %}{% endblock %}
+
+{% block content %}
+<div class="garl-admin-layout">
+
+  <!-- Admin Sidebar -->
+  <aside class="garl-admin-sidebar" id="adminSidebar" aria-label="{% trans 'Admin navigation' %}">
+    <div class="garl-admin-sidebar-header">
+      <i class="bi bi-shield-lock me-2 garl-text-gold"></i>
+      <span>{% trans "Admin Panel" %}</span>
+    </div>
+    <nav>
+      <ul class="garl-admin-nav">
+        <li class="garl-admin-nav-item active"><a href="{% url 'dashboard:admin_dashboard' %}"><i class="bi bi-speedometer2"></i><span>{% trans "Dashboard" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'dashboard:manage_users' %}"><i class="bi bi-people"></i><span>{% trans "Users" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'publishing:editor_dashboard' %}"><i class="bi bi-journals"></i><span>{% trans "Publications" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'innovation:moderate' %}"><i class="bi bi-lightbulb"></i><span>{% trans "Innovation" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'community:institution_list' %}"><i class="bi bi-building"></i><span>{% trans "Institutions" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'events:list' %}"><i class="bi bi-calendar-event"></i><span>{% trans "Events" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'support:my_tickets' %}"><i class="bi bi-headset"></i><span>{% trans "Support" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'payments:admin_revenue' %}"><i class="bi bi-graph-up-arrow"></i><span>{% trans "Revenue" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'analytics:dashboard' %}"><i class="bi bi-bar-chart-line"></i><span>{% trans "Analytics" %}</span></a></li>
+        <li class="garl-admin-nav-item"><a href="{% url 'admin:index' %}"><i class="bi bi-gear"></i><span>{% trans "Django Admin" %}</span></a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Admin Main -->
+  <main class="garl-admin-main">
+    <div class="garl-admin-topbar">
+      <button class="btn btn-sm btn-outline-secondary d-lg-none me-2"
+              id="sidebarToggle" aria-label="{% trans 'Toggle sidebar' %}">
+        <i class="bi bi-list"></i>
+      </button>
+      <h4 class="mb-0">
+        <i class="bi bi-speedometer2 me-2 garl-text-gold"></i>{% trans "Admin Dashboard" %}
+      </h4>
+      <div class="ms-auto d-flex gap-2">
+        <a href="{% url 'core:home' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-globe me-1"></i>{% trans "View Site" %}
+        </a>
+      </div>
+    </div>
+
+    <div class="garl-admin-content">
+
+      <!-- Stats row -->
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="garl-admin-stat garl-admin-stat--blue">
+            <div class="garl-admin-stat-number">{{ stats.total_users|intcomma }}</div>
+            <div class="garl-admin-stat-label">{% trans "Total Users" %}</div>
+            <div class="garl-admin-stat-sub">+{{ stats.new_users_today }} {% trans "today" %}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="garl-admin-stat garl-admin-stat--gold">
+            <div class="garl-admin-stat-number">{{ stats.total_publications|intcomma }}</div>
+            <div class="garl-admin-stat-label">{% trans "Publications" %}</div>
+            <div class="garl-admin-stat-sub">{{ stats.pending_review }} {% trans "pending" %}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="garl-admin-stat garl-admin-stat--green">
+            <div class="garl-admin-stat-number">{{ stats.total_courses|intcomma }}</div>
+            <div class="garl-admin-stat-label">{% trans "Courses" %}</div>
+            <div class="garl-admin-stat-sub">{{ stats.total_enrollments }} {% trans "enrolled" %}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="garl-admin-stat garl-admin-stat--teal">
+            <div class="garl-admin-stat-number">{{ stats.total_papers|intcomma }}</div>
+            <div class="garl-admin-stat-label">{% trans "Research Papers" %}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="garl-admin-stat garl-admin-stat--purple">
+            <div class="garl-admin-stat-number">{{ stats.total_projects|intcomma }}</div>
+            <div class="garl-admin-stat-label">{% trans "Projects" %}</div>
+            <div class="garl-admin-stat-sub">{{ stats.pending_projects }} {% trans "pending" %}</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="garl-admin-stat garl-admin-stat--red">
+            <div class="garl-admin-stat-number">{{ stats.open_tickets|intcomma }}</div>
+            <div class="garl-admin-stat-label">{% trans "Open Tickets" %}</div>
+            <div class="garl-admin-stat-sub">{{ stats.in_progress_tickets }} {% trans "in progress" %}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+
+        <!-- Recent Registrations -->
+        <div class="col-lg-6">
+          <div class="garl-admin-card">
+            <div class="garl-admin-card-header">
+              <h6 class="mb-0"><i class="bi bi-person-plus me-2"></i>{% trans "Recent Registrations" %}</h6>
+              <a href="{% url 'dashboard:manage_users' %}" class="btn btn-xs btn-outline-primary">{% trans "All Users" %}</a>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>{% trans "Name" %}</th>
+                    <th>{% trans "Role" %}</th>
+                    <th>{% trans "Joined" %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for u in recent_users %}
+                  <tr>
+                    <td>
+                      <a href="{% url 'accounts:public_profile' u.username %}" class="garl-link-dark">
+                        {{ u.get_full_name }}
+                      </a>
+                    </td>
+                    <td><span class="badge garl-role-badge">{{ u.get_role_display }}</span></td>
+                    <td><small class="text-muted">{{ u.date_joined|date:"M d, Y" }}</small></td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="3" class="text-muted text-center">{% trans "No recent registrations." %}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Submissions -->
+        <div class="col-lg-6">
+          <div class="garl-admin-card">
+            <div class="garl-admin-card-header">
+              <h6 class="mb-0"><i class="bi bi-hourglass-split me-2"></i>{% trans "Pending Submissions" %}</h6>
+              <a href="{% url 'publishing:editor_dashboard' %}" class="btn btn-xs btn-outline-warning">{% trans "All" %}</a>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>{% trans "Title" %}</th>
+                    <th>{% trans "Submitted by" %}</th>
+                    <th>{% trans "Status" %}</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for sub in pending_subs %}
+                  <tr>
+                    <td class="garl-clamp-1">{{ sub.publication.title|truncatechars:40 }}</td>
+                    <td><small>{{ sub.submitted_by.get_full_name|default:sub.submitted_by.username }}</small></td>
+                    <td><span class="badge garl-status-badge garl-status-{{ sub.publication.status }}">{{ sub.publication.get_status_display }}</span></td>
+                    <td>
+                      <a href="{% url 'publishing:approve' sub.publication.pk %}" class="btn btn-xs btn-success me-1"
+                         onclick="return confirm('{% trans "Approve and publish?" %}')">
+                        <i class="bi bi-check-circle"></i>
+                      </a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-muted text-center">{% trans "No pending submissions." %}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Open Tickets -->
+        <div class="col-lg-6">
+          <div class="garl-admin-card">
+            <div class="garl-admin-card-header">
+              <h6 class="mb-0"><i class="bi bi-ticket me-2"></i>{% trans "Open Support Tickets" %}</h6>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>{% trans "Ticket" %}</th>
+                    <th>{% trans "Subject" %}</th>
+                    <th>{% trans "Priority" %}</th>
+                    <th>{% trans "Date" %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ticket in open_tickets %}
+                  <tr>
+                    <td><a href="{% url 'support:ticket_detail' ticket.pk %}" class="garl-link-primary">{{ ticket.ticket_number }}</a></td>
+                    <td class="garl-clamp-1">{{ ticket.subject|truncatechars:35 }}</td>
+                    <td><span class="badge garl-priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+                    <td><small class="text-muted">{{ ticket.created_at|date:"M d" }}</small></td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="4" class="text-muted text-center">{% trans "No open tickets." %}</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Log -->
+        <div class="col-lg-6">
+          <div class="garl-admin-card">
+            <div class="garl-admin-card-header">
+              <h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>{% trans "Recent Activity Log" %}</h6>
+            </div>
+            <div class="garl-audit-list">
+              {% for log in recent_logs %}
+              <div class="garl-audit-item">
+                <div class="garl-audit-icon garl-audit-{{ log.action }}">
+                  <i class="bi bi-{% if log.action == 'login' %}box-arrow-in-right{% elif log.action == 'create' %}plus-circle{% elif log.action == 'approve' %}check-circle{% elif log.action == 'reject' %}x-circle{% elif log.action == 'delete' %}trash{% elif log.action == 'download' %}download{% else %}pencil{% endif %}"></i>
+                </div>
+                <div class="garl-audit-body">
+                  <div class="garl-audit-desc">
+                    <strong>{{ log.user.get_full_name|default:"System" }}</strong>
+                    — {{ log.get_action_display }} {{ log.object_repr|truncatechars:40 }}
+                  </div>
+                  <small class="text-muted">{{ log.timestamp|date:"M d, H:i" }}</small>
+                </div>
+              </div>
+              {% empty %}
+              <p class="text-muted text-center py-3">{% trans "No activity recorded yet." %}</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Users by Role (chart placeholder) -->
+        <div class="col-12">
+          <div class="garl-admin-card">
+            <div class="garl-admin-card-header">
+              <h6 class="mb-0"><i class="bi bi-pie-chart me-2"></i>{% trans "Users by Role" %}</h6>
+            </div>
+            <div class="p-3">
+              {% for item in users_by_role %}
+              <div class="d-flex align-items-center mb-2">
+                <div class="garl-role-bar-label">{{ item.role|title }}</div>
+                <div class="flex-grow-1 mx-3">
+                  <div class="progress" style="height:20px;" role="progressbar"
+                       aria-valuenow="{{ item.count }}" aria-valuemin="0"
+                       aria-valuemax="{{ stats.total_users }}">
+                    {% widthratio item.count stats.total_users 100 as pct %}
+                    <div class="progress-bar bg-warning" style="width:{{ pct }}%">
+                      {{ item.count }}
+                    </div>
+                  </div>
+                </div>
+                <div class="garl-role-bar-count">{{ item.count }}</div>
+              </div>
+              {% empty %}
+              <p class="text-muted">{% trans "No role data available." %}</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+    document.getElementById('adminSidebar').classList.toggle('garl-admin-sidebar--open');
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Innovation Projects" %}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'innovation:home' %}">{% trans "Innovation" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Projects" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2"></i>{% trans "Filter" %}</h6>
+        <form method="get">
+          <div class="mb-3"><input type="search" name="q" class="form-control form-control-sm" value="{{ q }}" placeholder="{% trans 'Search...' %}" /></div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Category" %}</label>
+            <select name="category" class="form-select form-select-sm">
+              <option value="">{% trans "All Categories" %}</option>
+              {% for cat in categories %}<option value="{{ cat.pk }}" {% if request.GET.category == cat.pk|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Type" %}</label>
+            <select name="type" class="form-select form-select-sm">
+              <option value="">{% trans "All Types" %}</option>
+              {% for val, label in project_types %}<option value="{{ val }}" {% if request.GET.type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-sm btn-garl-gold">{% trans "Apply" %}</button>
+            <a href="{% url 'innovation:project_list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="col-lg-9">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="mb-0">{% trans "Innovation Projects" %}</h4>
+        <a href="{% url 'innovation:submit' %}" class="btn btn-sm btn-garl-gold"><i class="bi bi-plus me-1"></i>{% trans "Submit Project" %}</a>
+      </div>
+      {% if page_obj %}
+      <div class="row g-4">
+        {% for project in page_obj %}
+        <div class="col-lg-4 col-md-6">
+          <div class="garl-card h-100">
+            {% if project.cover_image %}<img src="{{ project.cover_image.url }}" class="card-img-top garl-card-img" alt="{{ project.title }}" loading="lazy" />
+            {% else %}<div class="garl-card-img-placeholder garl-card-img-placeholder--innovation"><i class="bi bi-lightbulb"></i></div>{% endif %}
+            <div class="card-body d-flex flex-column">
+              <span class="badge garl-badge-project mb-2">{{ project.get_project_type_display }}</span>
+              <h6 class="garl-clamp-2"><a href="{% url 'innovation:project_detail' project.slug %}" class="garl-link-dark">{{ project.title }}</a></h6>
+              <p class="small text-muted garl-clamp-2 mt-auto mb-2">{{ project.description|truncatewords:15 }}</p>
+              {% if project.technologies %}<small class="text-muted"><i class="bi bi-code me-1"></i>{{ project.technologies|truncatechars:50 }}</small>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if page_obj.has_other_pages %}
+      <nav class="mt-4"><ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+        <li class="page-item disabled"><span class="page-link">{{ page_obj.number }}</span></li>
+        {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+      </ul></nav>
+      {% endif %}
+      {% else %}
+      <div class="garl-empty-state text-center py-5"><i class="bi bi-lightbulb fs-1 text-muted mb-3 d-block"></i><h5>{% trans "No projects found" %}</h5></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

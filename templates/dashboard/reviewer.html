@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Reviewer Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="garl-welcome-banner mb-4">
+    <h4 class="text-white mb-1">{% trans "Reviewer Dashboard" %}</h4>
+    <p class="text-white-50 mb-0">{{ request.user.get_full_name }}</p>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--red">
+        <div class="garl-admin-stat-number">{{ pending_reviews|length }}</div>
+        <div class="garl-admin-stat-label">{% trans "Pending Reviews" %}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="garl-admin-stat garl-admin-stat--green">
+        <div class="garl-admin-stat-number">{{ completed_reviews|length }}</div>
+        <div class="garl-admin-stat-label">{% trans "Completed" %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Pending -->
+    <div class="col-lg-7">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-hourglass-split me-2 text-warning"></i>{% trans "Pending Reviews" %}</h6>
+        </div>
+        {% if pending_reviews %}
+        {% for review in pending_reviews %}
+        <div class="garl-list-item">
+          <div class="flex-grow-1">
+            <div class="fw-medium garl-clamp-1">{{ review.submission.publication.title }}</div>
+            {% if review.due_date %}
+            <small class="text-muted"><i class="bi bi-calendar-event me-1"></i>{% trans "Due:" %} {{ review.due_date|date:"M d, Y" }}</small>
+            {% endif %}
+          </div>
+          <a href="{% url 'publishing:submit_review' review.pk %}" class="btn btn-sm btn-garl-gold flex-shrink-0">
+            <i class="bi bi-pencil me-1"></i>{% trans "Review" %}
+          </a>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-5">
+          <i class="bi bi-clipboard-check fs-1 text-muted mb-3 d-block"></i>
+          <p class="text-muted">{% trans "No pending reviews. Great work!" %}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Completed -->
+    <div class="col-lg-5">
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-check-circle me-2 text-success"></i>{% trans "Completed Reviews" %}</h6>
+        </div>
+        {% if completed_reviews %}
+        {% for review in completed_reviews %}
+        <div class="garl-list-item">
+          <div class="flex-grow-1">
+            <div class="small fw-medium garl-clamp-1">{{ review.submission.publication.title }}</div>
+            <div class="d-flex gap-2 mt-1">
+              <span class="badge bg-success-subtle text-success-emphasis small">{{ review.get_recommendation_display }}</span>
+              <small class="text-muted">{{ review.submitted_at|date:"M d, Y" }}</small>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-4"><p class="text-muted small">{% trans "No completed reviews yet." %}</p></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

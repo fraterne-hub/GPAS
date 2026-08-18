@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Search Results" %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+      <li class="breadcrumb-item active">{% trans "Search" %}</li>
+    </ol>
+  </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Search header -->
+  <div class="garl-search-header mb-4">
+    <form action="{% url 'search:results' %}" method="get" role="search">
+      <div class="input-group input-group-lg garl-search-group">
+        <span class="input-group-text garl-search-icon"><i class="bi bi-search"></i></span>
+        <input type="search" name="q" class="form-control"
+               value="{{ q }}" placeholder="{% trans 'Search GARL...' %}"
+               aria-label="{% trans 'Search' %}" autofocus />
+        <select name="type" class="form-select" style="max-width:160px;">
+          <option value="all" {% if content_type == 'all' %}selected{% endif %}>{% trans "All Content" %}</option>
+          <option value="publications" {% if content_type == 'publications' %}selected{% endif %}>{% trans "Publications" %}</option>
+          <option value="papers" {% if content_type == 'papers' %}selected{% endif %}>{% trans "Research Papers" %}</option>
+          <option value="books" {% if content_type == 'books' %}selected{% endif %}>{% trans "Books" %}</option>
+          <option value="courses" {% if content_type == 'courses' %}selected{% endif %}>{% trans "Courses" %}</option>
+          <option value="innovations" {% if content_type == 'innovations' %}selected{% endif %}>{% trans "Innovations" %}</option>
+          <option value="events" {% if content_type == 'events' %}selected{% endif %}>{% trans "Events" %}</option>
+          <option value="institutions" {% if content_type == 'institutions' %}selected{% endif %}>{% trans "Institutions" %}</option>
+          <option value="health" {% if content_type == 'health' %}selected{% endif %}>{% trans "Health Resources" %}</option>
+          <option value="researchers" {% if content_type == 'researchers' %}selected{% endif %}>{% trans "Researchers" %}</option>
+        </select>
+        <button class="btn btn-garl-gold" type="submit">{% trans "Search" %}</button>
+      </div>
+    </form>
+  </div>
+
+  {% if q %}
+  <p class="text-muted mb-4">
+    {% blocktrans count total=total with q=q %}
+    {{ total }} result for "<strong>{{ q }}</strong>"
+    {% plural %}
+    {{ total }} results for "<strong>{{ q }}</strong>"
+    {% endblocktrans %}
+  </p>
+
+  {% if total == 0 %}
+  <div class="garl-empty-state text-center py-5">
+    <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
+    <h5>{% trans "No results found" %}</h5>
+    <p class="text-muted">{% trans "Try different keywords or explore our content categories below." %}</p>
+    <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+      <a href="{% url 'research:paper_list' %}" class="btn btn-outline-primary btn-sm">{% trans "Research Papers" %}</a>
+      <a href="{% url 'publishing:book_list' %}" class="btn btn-outline-warning btn-sm">{% trans "Books" %}</a>
+      <a href="{% url 'learning:course_list' %}" class="btn btn-outline-info btn-sm">{% trans "Courses" %}</a>
+    </div>
+  </div>
+  {% else %}
+
+  <!-- Publications -->
+  {% if results.publications %}
+  <section class="mb-5" aria-labelledby="pub-results-heading">
+    <h5 class="garl-results-section-title" id="pub-results-heading">
+      <i class="bi bi-journals me-2 text-warning"></i>{% trans "Publications" %}
+      <span class="badge bg-secondary ms-2">{{ results.publications|length }}</span>
+    </h5>
+    <div class="row g-3">
+      {% for pub in results.publications %}
+      <div class="col-md-6 col-lg-4">
+        <div class="garl-result-card">
+          <span class="badge garl-badge-type mb-2">{% trans "Publication" %}</span>
+          <h6><a href="{% url 'publishing:publication_detail' pub.slug %}" class="garl-link-dark">{{ pub.title }}</a></h6>
+          <p class="small text-muted garl-clamp-2">{{ pub.abstract|truncatewords:20 }}</p>
+          <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ pub.published_at|date:"Y" }}</small>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Research Papers -->
+  {% if results.papers %}
+  <section class="mb-5" aria-labelledby="paper-results-heading">
+    <h5 class="garl-results-section-title" id="paper-results-heading">
+      <i class="bi bi-file-earmark-text me-2 text-primary"></i>{% trans "Research Papers" %}
+      <span class="badge bg-secondary ms-2">{{ results.papers|length }}</span>
+    </h5>
+    <div class="row g-3">
+      {% for paper in results.papers %}
+      <div class="col-md-6 col-lg-4">
+        <div class="garl-result-card">
+          <span class="badge garl-badge-type mb-2">{% trans "Research Paper" %}</span>
+          <h6><a href="{% url 'research:paper_detail' paper.slug %}" class="garl-link-dark">{{ paper.title }}</a></h6>
+          <p class="small text-muted garl-clamp-2">{{ paper.abstract|truncatewords:20 }}</p>
+          <small class="text-muted">
+            {% if paper.publication_year %}{{ paper.publication_year }}{% endif %}
+            {% if paper.journal_name %} · {{ paper.journal_name|truncatechars:30 }}{% endif %}
+          </small>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Books -->
+  {% if results.books %}
+  <section class="mb-5" aria-labelledby="book-results-heading">
+    <h5 class="garl-results-section-title" id="book-results-heading">
+      <i class="bi bi-book me-2 text-warning"></i>{% trans "Books" %}
+      <span class="badge bg-secondary ms-2">{{ results.books|length }}</span>
+    </h5>
+    <div class="row g-3">
+      {% for book in results.books %}
+      <div class="col-md-6 col-lg-3">
+        <div class="garl-result-card">
+          <span class="badge garl-badge-type mb-2">{% trans "Book" %}</span>
+          <h6><a href="{% url 'publishing:book_detail' book.slug %}" class="garl-link-dark">{{ book.title }}</a></h6>
+          <p class="small text-muted">{{ book.publisher }} {% if book.year %}· {{ book.year }}{% endif %}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Courses -->
+  {% if results.courses %}
+  <section class="mb-5" aria-labelledby="course-results-heading">
+    <h5 class="garl-results-section-title" id="course-results-heading">
+      <i class="bi bi-mortarboard me-2 text-info"></i>{% trans "Courses" %}
+      <span class="badge bg-secondary ms-2">{{ results.courses|length }}</span>
+    </h5>
+    <div class="row g-3">
+      {% for course in results.courses %}
+      <div class="col-md-6 col-lg-3">
+        <div class="garl-result-card">
+          <span class="badge garl-badge-level-{{ course.level }} mb-2">{{ course.get_level_display }}</span>
+          <h6><a href="{% url 'learning:course_detail' course.slug %}" class="garl-link-dark">{{ course.title }}</a></h6>
+          <small class="text-muted"><i class="bi bi-people me-1"></i>{{ course.enrollment_count }} {% trans "enrolled" %}</small>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Innovations -->
+  {% if results.innovations %}
+  <section class="mb-5" aria-labelledby="innov-results-heading">
+    <h5 class="garl-results-section-title" id="innov-results-heading">
+      <i class="bi bi-lightbulb me-2 text-warning"></i>{% trans "Innovations" %}
+      <span class="badge bg-secondary ms-2">{{ results.innovations|length }}</span>
+    </h5>
+    <div class="row g-3">
+      {% for project in results.innovations %}
+      <div class="col-md-6 col-lg-4">
+        <div class="garl-result-card">
+          <span class="badge garl-badge-project mb-2">{{ project.get_project_type_display }}</span>
+          <h6><a href="{% url 'innovation:project_detail' project.slug %}" class="garl-link-dark">{{ project.title }}</a></h6>
+          <p class="small text-muted garl-clamp-2">{{ project.description|truncatewords:15 }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Researchers -->
+  {% if results.researchers %}
+  <section class="mb-5" aria-labelledby="researcher-results-heading">
+    <h5 class="garl-results-section-title" id="researcher-results-heading">
+      <i class="bi bi-person-workspace me-2 text-success"></i>{% trans "Researchers" %}
+      <span class="badge bg-secondary ms-2">{{ results.researchers|length }}</span>
+    </h5>
+    <div class="row g-3">
+      {% for researcher in results.researchers %}
+      <div class="col-md-4 col-lg-3">
+        <div class="garl-result-card text-center">
+          <div class="garl-avatar-md garl-avatar-initials rounded-circle mx-auto mb-2">
+            {{ researcher.first_name|first }}{{ researcher.last_name|first }}
+          </div>
+          <h6><a href="{% url 'accounts:public_profile' researcher.username %}" class="garl-link-dark">{{ researcher.get_full_name }}</a></h6>
+          {% if researcher.profile.institution %}
+          <small class="text-muted">{{ researcher.profile.institution }}</small>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Events -->
+  {% if results.events %}
+  <section class="mb-5" aria-labelledby="events-results-heading">
+    <h5 class="garl-results-section-title" id="events-results-heading">
+      <i class="bi bi-calendar-event me-2 text-success"></i>{% trans "Events" %}
+      <span class="badge bg-secondary ms-2">{{ results.events|length }}</span>
+    </h5>
+    <div class="row g-3">
+      {% for event in results.events %}
+      <div class="col-md-6 col-lg-4">
+        <div class="garl-result-card">
+          <span class="badge garl-badge-event-type mb-2">{{ event.get_event_type_display }}</span>
+          <h6><a href="{% url 'events:detail' event.slug %}" class="garl-link-dark">{{ event.title }}</a></h6>
+          <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ event.start_date|date:"M d, Y" }}</small>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% endif %}{# end total > 0 #}
+  {% else %}
+  <div class="garl-empty-state text-center py-5">
+    <i class="bi bi-search fs-1 text-muted mb-3 d-block"></i>
+    <h5>{% trans "Search the Global Academic Library" %}</h5>
+    <p class="text-muted">{% trans "Enter keywords to search across all academic content." %}</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

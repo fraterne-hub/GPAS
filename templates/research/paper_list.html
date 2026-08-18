@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Research Papers" %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'research:home' %}">{% trans "Research" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Papers" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="row g-4">
+
+    <!-- Filters Sidebar -->
+    <div class="col-lg-3">
+      <div class="garl-card p-3">
+        <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2"></i>{% trans "Filter Papers" %}</h6>
+        <form method="get">
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Search" %}</label>
+            <input type="search" name="q" class="form-control form-control-sm"
+                   value="{{ q }}" placeholder="{% trans 'Keywords, title, abstract...' %}" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Category" %}</label>
+            <select name="category" class="form-select form-select-sm">
+              <option value="">{% trans "All Categories" %}</option>
+              {% for cat in categories %}
+              <option value="{{ cat.pk }}" {% if request.GET.category == cat.pk|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted">{% trans "Year" %}</label>
+            <input type="number" name="year" class="form-control form-control-sm"
+                   value="{{ request.GET.year }}" placeholder="e.g. 2024" min="1900" max="2030" />
+          </div>
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-sm btn-garl-gold">{% trans "Apply Filters" %}</button>
+            <a href="{% url 'research:paper_list' %}" class="btn btn-sm btn-outline-secondary">{% trans "Clear" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="col-lg-9">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="mb-0">
+          {% trans "Research Papers" %}
+          {% if q %}<small class="text-muted fs-6 ms-2">— "{{ q }}"</small>{% endif %}
+        </h4>
+        <div class="d-flex gap-2">
+          <a href="{% url 'research:submit_paper' %}" class="btn btn-sm btn-garl-gold">
+            <i class="bi bi-upload me-1"></i>{% trans "Submit Paper" %}
+          </a>
+        </div>
+      </div>
+
+      {% if page_obj %}
+      <div class="row g-3">
+        {% for paper in page_obj %}
+        <div class="col-12">
+          <div class="garl-card p-3">
+            <div class="d-flex gap-2 mb-2 flex-wrap">
+              {% for cat in paper.categories.all|slice:":3" %}
+              <span class="badge garl-badge-type">{{ cat.name }}</span>
+              {% endfor %}
+              {% if paper.language and paper.language != 'English' %}
+              <span class="badge bg-secondary">{{ paper.language }}</span>
+              {% endif %}
+            </div>
+            <h5 class="mb-1">
+              <a href="{% url 'research:paper_detail' paper.slug %}" class="garl-link-dark">{{ paper.title }}</a>
+            </h5>
+            <p class="text-muted small garl-clamp-2 mb-2">{{ paper.abstract|truncatewords:40 }}</p>
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+              {% if paper.publication_year %}<small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ paper.publication_year }}</small>{% endif %}
+              {% if paper.journal_name %}<small class="text-muted"><i class="bi bi-journal me-1"></i>{{ paper.journal_name|truncatechars:35 }}</small>{% endif %}
+              <small class="text-muted"><i class="bi bi-eye me-1"></i>{{ paper.view_count }} {% trans "views" %}</small>
+              <small class="text-muted"><i class="bi bi-download me-1"></i>{{ paper.download_count }} {% trans "downloads" %}</small>
+              <div class="ms-auto d-flex gap-2">
+                <a href="{% url 'research:paper_detail' paper.slug %}" class="btn btn-xs btn-outline-primary">{% trans "View" %}</a>
+                {% if paper.file %}
+                <a href="{% url 'research:paper_download' paper.pk %}" class="btn btn-xs btn-outline-success"><i class="bi bi-download me-1"></i>{% trans "Download" %}</a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+      <nav class="mt-4" aria-label="{% trans 'Papers pagination' %}">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}">{% trans "Previous" %}</a></li>{% endif %}
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}&q={{ q }}">{{ num }}</a></li>
+            {% endif %}
+          {% endfor %}
+          {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}">{% trans "Next" %}</a></li>{% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+
+      {% else %}
+      <div class="garl-empty-state text-center py-5">
+        <i class="bi bi-file-earmark-text fs-1 text-muted mb-3 d-block"></i>
+        <h5>{% trans "No papers found" %}</h5>
+        <p class="text-muted">{% trans "Try adjusting your filters or search terms." %}</p>
+        {% if user.is_authenticated %}
+        <a href="{% url 'research:submit_paper' %}" class="btn btn-garl-gold mt-2">{% trans "Submit a Paper" %}</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

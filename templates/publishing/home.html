@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Publishing Center" %}{% endblock %}
+
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item active">{% trans "Publishing Center" %}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="garl-module-hero garl-module-hero--publishing">
+  <div class="container-fluid px-4 py-5">
+    <h1 class="display-5 fw-bold text-white mb-3">
+      <i class="bi bi-journals me-3 garl-text-gold"></i>{% trans "Publishing Center" %}
+    </h1>
+    <p class="lead text-white-50 mb-4">{% trans "Submit manuscripts, track peer review, publish books, journals and conference papers." %}</p>
+    <div class="d-flex flex-wrap gap-3">
+      <a href="{% url 'publishing:submit' %}" class="btn btn-garl-gold btn-lg"><i class="bi bi-upload me-2"></i>{% trans "Submit Publication" %}</a>
+      <a href="{% url 'publishing:publication_list' %}" class="btn btn-outline-light btn-lg">{% trans "Browse Publications" %}</a>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 py-5">
+
+  <!-- Publication Types -->
+  {% if pub_types %}
+  <h2 class="garl-section-title mb-4">{% trans "Publication Types" %}</h2>
+  <div class="row g-3 mb-5">
+    {% for pt in pub_types %}
+    <div class="col-md-3 col-sm-4 col-6">
+      <a href="{% url 'publishing:publication_list' %}?type={{ pt.pk }}" class="garl-category-pill">
+        {{ pt.name }}
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Recent Publications -->
+  {% if recent %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-journals me-2 garl-text-gold"></i>{% trans "Recent Publications" %}</h2>
+    <a href="{% url 'publishing:publication_list' %}" class="btn btn-outline-warning btn-sm">{% trans "View All" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-4 mb-5">
+    {% for pub in recent %}
+    <div class="col-lg-3 col-md-4 col-sm-6">
+      <div class="garl-card h-100">
+        {% if pub.cover_image %}
+        <img src="{{ pub.cover_image.url }}" class="card-img-top garl-card-img" alt="{{ pub.title }}" loading="lazy" />
+        {% else %}
+        <div class="garl-card-img-placeholder"><i class="bi bi-journal-text"></i></div>
+        {% endif %}
+        <div class="card-body d-flex flex-column">
+          {% if pub.pub_type %}<span class="badge garl-badge-type mb-2">{{ pub.pub_type.name }}</span>{% endif %}
+          <h6 class="card-title garl-clamp-2">
+            <a href="{% url 'publishing:publication_detail' pub.slug %}" class="garl-link-dark">{{ pub.title }}</a>
+          </h6>
+          <p class="card-text text-muted small garl-clamp-2 mt-auto">{{ pub.abstract|truncatewords:15 }}</p>
+          <div class="garl-card-meta mt-2">
+            <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ pub.published_at|date:"M Y" }}</small>
+            {% if pub.is_open_access %}<span class="badge bg-success-subtle text-success-emphasis ms-2"><i class="bi bi-unlock-fill me-1"></i>OA</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Journals -->
+  {% if journals %}
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="garl-section-title mb-0"><i class="bi bi-journal-text me-2 garl-text-gold"></i>{% trans "Journals" %}</h2>
+    <a href="{% url 'publishing:journal_list' %}" class="btn btn-outline-warning btn-sm">{% trans "All Journals" %} <i class="bi bi-arrow-right ms-1"></i></a>
+  </div>
+  <div class="row g-3">
+    {% for journal in journals %}
+    <div class="col-md-4 col-sm-6">
+      <div class="garl-card p-3 h-100">
+        <h6 class="mb-1"><a href="{% url 'publishing:journal_detail' journal.slug %}" class="garl-link-dark">{{ journal.title }}</a></h6>
+        {% if journal.issn %}<small class="text-muted">ISSN: {{ journal.issn }}</small>{% endif %}
+        {% if journal.is_open_access %}<span class="badge bg-success-subtle text-success-emphasis ms-2 small">{% trans "Open Access" %}</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

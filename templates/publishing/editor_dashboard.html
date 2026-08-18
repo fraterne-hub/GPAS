@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load i18n garl_tags %}
+{% block title %}{% trans "Editor Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <h3 class="mb-4"><i class="bi bi-pencil-square me-2 garl-text-gold"></i>{% trans "Editor Dashboard" %}</h3>
+  <div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="garl-admin-stat garl-admin-stat--blue"><div class="garl-admin-stat-number">{{ stats.submitted }}</div><div class="garl-admin-stat-label">{% trans "Submitted" %}</div></div></div>
+    <div class="col-md-3"><div class="garl-admin-stat garl-admin-stat--gold"><div class="garl-admin-stat-number">{{ stats.under_review }}</div><div class="garl-admin-stat-label">{% trans "Under Review" %}</div></div></div>
+    <div class="col-md-3"><div class="garl-admin-stat garl-admin-stat--green"><div class="garl-admin-stat-number">{{ stats.approved }}</div><div class="garl-admin-stat-label">{% trans "Approved" %}</div></div></div>
+    <div class="col-md-3"><div class="garl-admin-stat garl-admin-stat--teal"><div class="garl-admin-stat-number">{{ stats.published }}</div><div class="garl-admin-stat-label">{% trans "Published" %}</div></div></div>
+  </div>
+  <div class="garl-card">
+    <div class="garl-admin-card-header"><h6 class="mb-0">{% trans "Pending Submissions" %}</h6></div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead><tr><th>{% trans "Title" %}</th><th>{% trans "Author" %}</th><th>{% trans "Status" %}</th><th>{% trans "Submitted" %}</th><th>{% trans "Actions" %}</th></tr></thead>
+        <tbody>
+          {% for sub in submissions %}
+          <tr>
+            <td class="garl-clamp-1" style="max-width:280px;">{{ sub.publication.title }}</td>
+            <td><small>{{ sub.submitted_by.get_full_name }}</small></td>
+            <td><span class="badge garl-status-badge garl-status-{{ sub.publication.status }}">{{ sub.publication.get_status_display }}</span></td>
+            <td><small class="text-muted">{{ sub.submitted_at|date:"M d, Y" }}</small></td>
+            <td>
+              <form method="post" action="{% url 'publishing:approve' sub.publication.pk %}" class="d-inline" data-confirm="{% trans 'Approve and publish this submission?' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-xs btn-success me-1"><i class="bi bi-check-circle me-1"></i>{% trans "Approve" %}</button>
+              </form>
+              <button type="button" class="btn btn-xs btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ sub.pk }}"><i class="bi bi-x-circle me-1"></i>{% trans "Reject" %}</button>
+              <!-- Reject Modal -->
+              <div class="modal fade" id="rejectModal{{ sub.pk }}" tabindex="-1">
+                <div class="modal-dialog"><div class="modal-content">
+                  <div class="modal-header"><h5 class="modal-title">{% trans "Reject Submission" %}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                  <form method="post" action="{% url 'publishing:reject' sub.publication.pk %}">
+                    {% csrf_token %}
+                    <div class="modal-body"><textarea name="reason" class="form-control" rows="3" placeholder="{% trans 'Reason for rejection (optional)' %}"></textarea></div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button><button type="submit" class="btn btn-danger">{% trans "Reject" %}</button></div>
+                  </form>
+                </div></div>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-muted text-center py-4">{% trans "No pending submissions." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

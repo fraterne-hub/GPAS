@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Researcher Dashboard" %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="garl-welcome-banner mb-4">
+    <h4 class="text-white mb-1">{% trans "Researcher Dashboard" %}</h4>
+    <p class="text-white-50 mb-0">{{ request.user.get_full_name }} &mdash; {{ request.user.email }}</p>
+    {% if profile.institution %}<p class="text-white-50 mb-0"><i class="bi bi-building me-1"></i>{{ profile.institution }}</p>{% endif %}
+  </div>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <!-- Research Papers -->
+      <div class="garl-dashboard-card mb-4">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2 text-primary"></i>{% trans "My Research Papers" %}</h6>
+          <a href="{% url 'research:submit_paper' %}" class="btn btn-xs btn-garl-gold">{% trans "+ Submit" %}</a>
+        </div>
+        {% if papers %}
+        {% for paper in papers %}
+        <div class="garl-list-item">
+          <div class="flex-grow-1">
+            <a href="{% url 'research:paper_detail' paper.slug %}" class="garl-link-dark fw-medium garl-clamp-1 d-block">{{ paper.title }}</a>
+            <small class="text-muted">{% if paper.publication_year %}{{ paper.publication_year }}{% endif %}{% if paper.journal_name %} · {{ paper.journal_name|truncatechars:30 }}{% endif %}</small>
+          </div>
+          <span class="badge garl-status-badge garl-status-{{ paper.status }}">{{ paper.get_status_display }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-3"><p class="text-muted small">{% trans "No papers yet." %}</p><a href="{% url 'research:submit_paper' %}" class="btn btn-sm btn-outline-primary">{% trans "Submit a Paper" %}</a></div>
+        {% endif %}
+      </div>
+
+      <!-- Publications -->
+      <div class="garl-dashboard-card mb-4">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-journals me-2 text-warning"></i>{% trans "My Publications" %}</h6>
+          <a href="{% url 'publishing:submit' %}" class="btn btn-xs btn-garl-gold">{% trans "+ Submit" %}</a>
+        </div>
+        {% if pubs %}
+        {% for pub in pubs %}
+        <div class="garl-list-item">
+          <div class="flex-grow-1"><div class="garl-list-title">{{ pub.title|truncatechars:60 }}</div><small class="text-muted">{{ pub.created_at|date:"M Y" }}</small></div>
+          <span class="badge garl-status-badge garl-status-{{ pub.status }}">{{ pub.get_status_display }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-3"><p class="text-muted small">{% trans "No publications yet." %}</p></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <!-- Research Projects -->
+      <div class="garl-dashboard-card mb-4">
+        <div class="garl-dashboard-card-header">
+          <h6 class="mb-0"><i class="bi bi-diagram-3 me-2 text-info"></i>{% trans "My Projects" %}</h6>
+        </div>
+        {% if projects %}
+        {% for proj in projects %}
+        <div class="garl-list-item">
+          <div class="flex-grow-1">
+            <a href="{% url 'research:project_detail' proj.slug %}" class="garl-link-dark fw-medium small d-block garl-clamp-1">{{ proj.title }}</a>
+          </div>
+          <span class="badge {% if proj.status == 'ongoing' %}bg-success{% else %}bg-secondary{% endif %}">{{ proj.get_status_display }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-3"><p class="text-muted small">{% trans "No projects yet." %}</p></div>
+        {% endif %}
+      </div>
+
+      <!-- Quick links -->
+      <div class="garl-dashboard-card">
+        <div class="garl-dashboard-card-header"><h6 class="mb-0">{% trans "Quick Actions" %}</h6></div>
+        <div class="p-3 d-flex flex-column gap-2">
+          <a href="{% url 'research:paper_list' %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-search me-1"></i>{% trans "Search Papers" %}</a>
+          <a href="{% url 'research:submit_paper' %}" class="btn btn-sm btn-outline-success"><i class="bi bi-upload me-1"></i>{% trans "Submit Paper" %}</a>
+          <a href="{% url 'publishing:my_submissions' %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-journals me-1"></i>{% trans "My Submissions" %}</a>
+          <a href="{% url 'accounts:profile' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-person-circle me-1"></i>{% trans "Edit Profile" %}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
