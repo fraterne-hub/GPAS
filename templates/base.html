@@ -640,12 +640,20 @@
         <div class="col-12 col-md-6 col-lg-3">
           <h6 class="garl-footer-heading">{% trans "Stay Updated" %}</h6>
           <p class="text-muted small">{% trans "Subscribe for latest research, courses and news." %}</p>
-          <form class="garl-newsletter-form" onsubmit="return false;">
+
+          <form id="newsletterForm" novalidate>
+            {% csrf_token %}
             <div class="input-group input-group-sm">
-              <input type="email" class="form-control"
-                     placeholder="{% trans 'Your email' %}" aria-label="Email" />
-              <button class="btn btn-garl-gold" type="submit">{% trans "Subscribe" %}</button>
+              <input type="email" id="newsletterEmail" class="form-control"
+                     placeholder="{% trans 'Your email address' %}"
+                     aria-label="{% trans 'Email for newsletter' %}"
+                     required />
+              <button class="btn btn-garl-gold" type="submit" id="newsletterBtn">
+                {% trans "Subscribe" %}
+              </button>
             </div>
+            <!-- Status message shown after submit -->
+            <div id="newsletterMsg" class="mt-2 small d-none"></div>
           </form>
         </div>
 

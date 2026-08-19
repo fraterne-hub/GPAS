@@ -1,64 +1,235 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block title %}{{ book.title }}{% endblock %}
+{% block breadcrumb %}
+<div class="container-fluid px-4 py-2 border-bottom">
+  <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'core:home' %}">{% trans "Home" %}</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'publishing:book_list' %}">{% trans "Books" %}</a></li>
+    <li class="breadcrumb-item active">{{ book.title|truncatechars:40 }}</li>
+  </ol></nav>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid px-4 py-4">
   <div class="row g-4">
+
+    <!-- ── Cover + Actions sidebar ── -->
     <div class="col-lg-3 col-md-4">
+
+      <!-- Book cover image -->
       {% if book.cover %}
-      <img src="{{ book.cover.url }}" alt="{{ book.title }}" class="img-fluid rounded shadow" />
+      <img src="{{ book.cover.url }}"
+           alt="{{ book.title }}"
+           class="img-fluid rounded shadow w-100"
+           style="max-height:380px;object-fit:cover;" />
       {% else %}
-      <div class="garl-card-img-placeholder rounded" style="height:300px;"><i class="bi bi-book-fill fs-1"></i></div>
+      <div class="garl-card-img-placeholder rounded d-flex align-items-center justify-content-center"
+           style="height:320px;background:linear-gradient(135deg,var(--garl-navy),var(--garl-navy-mid));">
+        <i class="bi bi-book-fill text-warning" style="font-size:5rem;opacity:.5;"></i>
+      </div>
       {% endif %}
-      <div class="d-grid gap-2 mt-3">
-        {% if book.file %}
+
+      <!-- Price badge -->
+      <div class="mt-3 mb-2 text-center">
         {% if book.is_free %}
-        <a href="{% url 'publishing:book_download' book.pk %}" class="btn btn-garl-gold">
-          <i class="bi bi-download me-2"></i>{% trans "Download Free" %}
-        </a>
-        {% elif user.is_authenticated %}
-          {% comment %}Check access via context — see book_detail view{% endcomment %}
-          {% if has_access %}
-          <a href="{% url 'payments:download' 'book' book.pk 'existing' %}" class="btn btn-success">
-            <i class="bi bi-download me-2"></i>{% trans "Download" %} {% trans "(Purchased)" %}
+        <span class="badge bg-success fs-6 px-3 py-2">
+          <i class="bi bi-unlock-fill me-2"></i>{% trans "Free Access" %}
+        </span>
+        {% elif book_price and not book_price.is_free %}
+        <div class="garl-card p-3 text-center">
+          <div class="text-muted small mb-1">{% trans "Price" %}</div>
+          <div class="fw-bold fs-3 garl-text-gold">
+            {{ book_price.currency }} {{ book_price.price }}
+          </div>
+          <div class="text-muted small mt-1">
+            <i class="bi bi-person-fill me-1 text-success"></i>{% trans "Publisher earns" %} 60%
+            &nbsp;|&nbsp;
+            <i class="bi bi-building me-1 garl-text-gold"></i>{% trans "Platform" %} 40%
+          </div>
+        </div>
+        {% else %}
+        <span class="badge bg-success fs-6 px-3 py-2">
+          <i class="bi bi-unlock-fill me-2"></i>{% trans "Open Access" %}
+        </span>
+        {% endif %}
+      </div>
+
+      <!-- Action buttons -->
+      <div class="d-grid gap-2">
+
+        {% if book.is_free or not book_price or book_price.is_free %}
+          {# ── FREE BOOK ─────────────────────────────────────────────────── #}
+          {% if book.file %}
+          <a href="{% url 'publishing:book_download' book.pk %}" class="btn btn-garl-gold btn-lg">
+            <i class="bi bi-download me-2"></i>{% trans "Download Free" %}
           </a>
           {% else %}
-          <a href="{% url 'payments:checkout' 'book' book.pk %}" class="btn btn-garl-gold">
-            <i class="bi bi-cart-check me-2"></i>{% trans "Buy to Download" %}
-            {% if book_price %}&nbsp; {{ book_price.currency }} {{ book_price.price }}{% endif %}
+          <div class="alert alert-info small py-2 mb-0">
+            <i class="bi bi-info-circle me-1"></i>{% trans "No downloadable file for this book yet." %}
+          </div>
+          {% endif %}
+
+        {% elif user.is_authenticated %}
+          {% if has_access %}
+          {# ── PAID & ALREADY PURCHASED ────────────────────────────────── #}
+          {% if book.file %}
+          <a href="{% url 'payments:download' 'book' book.pk 'existing' %}" class="btn btn-success btn-lg">
+            <i class="bi bi-download me-2"></i>{% trans "Download" %}
+            <span class="badge bg-white text-success ms-2 small">{% trans "Purchased" %}</span>
           </a>
           {% endif %}
+          <a href="{% url 'payments:receipt' purchase_txn %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-receipt me-1"></i>{% trans "View Receipt" %}
+          </a>
+
+          {% else %}
+          {# ── PAID BOOK — NOT YET PURCHASED ───────────────────────────── #}
+          <a href="{% url 'payments:checkout' 'book' book.pk %}" class="btn btn-garl-gold btn-lg">
+            <i class="bi bi-cart-check me-2"></i>{% trans "Buy & Download" %}
+            <br><small>{{ book_price.currency }} {{ book_price.price }}</small>
+          </a>
+          <div class="garl-card p-2 text-center mt-1">
+            <div class="d-flex justify-content-around text-muted small">
+              <span><i class="bi bi-shield-lock me-1 text-success"></i>{% trans "Secure Payment" %}</span>
+              <span><i class="bi bi-arrow-counterclockwise me-1"></i>{% trans "Instant Access" %}</span>
+            </div>
+          </div>
+          {% endif %}
+
         {% else %}
-        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-garl-gold">
-          <i class="bi bi-lock me-2"></i>{% trans "Sign in to Purchase" %}
-        </a>
+          {# ── NOT LOGGED IN ─────────────────────────────────────────────── #}
+          <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-garl-gold btn-lg">
+            <i class="bi bi-person-circle me-2"></i>{% trans "Sign In to Purchase" %}
+          </a>
+          <a href="{% url 'accounts:register' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-person-plus me-2"></i>{% trans "Create Free Account" %}
+          </a>
         {% endif %}
-        {% endif %}
-        <button class="btn btn-outline-secondary" data-bookmark data-content-type="book" data-object-id="{{ book.pk }}">
+
+        <!-- Bookmark -->
+        <button class="btn btn-outline-secondary"
+                data-bookmark data-content-type="book" data-object-id="{{ book.pk }}"
+                aria-label="{% trans 'Bookmark this book' %}">
           <i class="bi bi-bookmark me-1"></i>{% trans "Bookmark" %}
         </button>
+
+        <!-- Admin: set price button -->
+        {% if user.is_any_admin %}
+        <a href="{% url 'payments:set_price' 'book' book.pk %}"
+           class="btn btn-outline-warning btn-sm">
+          <i class="bi bi-tag me-1"></i>{% trans "Set / Edit Price" %}
+        </a>
+        {% endif %}
       </div>
     </div>
+
+    <!-- ── Book details main area ── -->
     <div class="col-lg-9 col-md-8">
       <div class="garl-card p-4">
-        {% if book.is_free %}<span class="badge bg-success mb-2">{% trans "Free" %}</span>{% endif %}
+
+        <!-- Status badges -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          {% if book.is_free %}
+          <span class="badge bg-success"><i class="bi bi-unlock-fill me-1"></i>{% trans "Free" %}</span>
+          {% elif book_price and not book_price.is_free %}
+          <span class="badge" style="background:var(--garl-gold);color:#fff;">
+            <i class="bi bi-lock-fill me-1"></i>{{ book_price.currency }} {{ book_price.price }}
+          </span>
+          {% endif %}
+          {% if book.language and book.language != 'English' %}
+          <span class="badge bg-light text-dark border">{{ book.language }}</span>
+          {% endif %}
+          {% if has_access and not book.is_free %}
+          <span class="badge bg-success-subtle text-success-emphasis">
+            <i class="bi bi-check-circle me-1"></i>{% trans "You own this" %}
+          </span>
+          {% endif %}
+        </div>
+
         <h2 class="mb-1">{{ book.title }}</h2>
-        {% if book.subtitle %}<h5 class="text-muted mb-3">{{ book.subtitle }}</h5>{% endif %}
-        <p>{{ book.description }}</p>
+        {% if book.subtitle %}
+        <h5 class="text-muted mb-3 fw-normal">{{ book.subtitle }}</h5>
+        {% endif %}
+
+        <p class="mt-3" style="line-height:1.8;">{{ book.description }}</p>
+
         <hr />
-        <div class="row g-2">
-          {% if book.publisher %}<div class="col-md-4"><small class="text-muted">{% trans "Publisher" %}</small><div>{{ book.publisher }}</div></div>{% endif %}
-          {% if book.year %}<div class="col-md-2"><small class="text-muted">{% trans "Year" %}</small><div>{{ book.year }}</div></div>{% endif %}
-          {% if book.isbn %}<div class="col-md-4"><small class="text-muted">ISBN</small><div>{{ book.isbn }}</div></div>{% endif %}
-          {% if book.pages %}<div class="col-md-2"><small class="text-muted">{% trans "Pages" %}</small><div>{{ book.pages }}</div></div>{% endif %}
-          {% if book.language %}<div class="col-md-3"><small class="text-muted">{% trans "Language" %}</small><div>{{ book.language }}</div></div>{% endif %}
+
+        <!-- Metadata grid -->
+        <div class="row g-3">
+          {% if book.publisher %}
+          <div class="col-sm-4 col-6">
+            <small class="text-muted d-block">{% trans "Publisher" %}</small>
+            <span class="fw-medium">{{ book.publisher }}</span>
+          </div>
+          {% endif %}
+          {% if book.year %}
+          <div class="col-sm-2 col-3">
+            <small class="text-muted d-block">{% trans "Year" %}</small>
+            <span class="fw-medium">{{ book.year }}</span>
+          </div>
+          {% endif %}
+          {% if book.edition %}
+          <div class="col-sm-2 col-3">
+            <small class="text-muted d-block">{% trans "Edition" %}</small>
+            <span class="fw-medium">{{ book.edition }}</span>
+          </div>
+          {% endif %}
+          {% if book.isbn %}
+          <div class="col-sm-4 col-6">
+            <small class="text-muted d-block">ISBN</small>
+            <span class="fw-medium font-monospace">{{ book.isbn }}</span>
+          </div>
+          {% endif %}
+          {% if book.pages %}
+          <div class="col-sm-2 col-3">
+            <small class="text-muted d-block">{% trans "Pages" %}</small>
+            <span class="fw-medium">{{ book.pages }}</span>
+          </div>
+          {% endif %}
+          {% if book.language %}
+          <div class="col-sm-3 col-3">
+            <small class="text-muted d-block">{% trans "Language" %}</small>
+            <span class="fw-medium">{{ book.language }}</span>
+          </div>
+          {% endif %}
         </div>
-        <div class="mt-3 text-muted small">
-          <i class="bi bi-eye me-1"></i>{{ book.view_count }} {% trans "views" %}
-          <i class="bi bi-download ms-3 me-1"></i>{{ book.download_count }} {% trans "downloads" %}
+
+        <!-- Stats -->
+        <div class="d-flex gap-4 mt-4 text-muted small">
+          <span><i class="bi bi-eye me-1"></i>{{ book.view_count }} {% trans "views" %}</span>
+          <span><i class="bi bi-download me-1"></i>{{ book.download_count }} {% trans "downloads" %}</span>
+          {% if book.subjects.exists %}
+          <span><i class="bi bi-tags me-1"></i>
+            {% for s in book.subjects.all|slice:":3" %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          </span>
+          {% endif %}
         </div>
+
+        <!-- Revenue split info for paid books -->
+        {% if book_price and not book_price.is_free and not has_access %}
+        <div class="alert alert-light border mt-4 mb-0">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-info-circle text-primary fs-5 flex-shrink-0"></i>
+            <div>
+              <strong>{% trans "About this purchase" %}</strong>
+              <div class="small text-muted mt-1">
+                {% blocktrans with price=book_price.price currency=book_price.currency %}
+                One-time purchase of {{ currency }} {{ price }}.
+                Publisher receives 60% · Platform fee 40%.
+                Instant access after payment. No subscription needed.
+                {% endblocktrans %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
       </div>
     </div>
+
   </div>
 </div>
 {% endblock %}

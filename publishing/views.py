@@ -258,19 +258,35 @@ def book_detail(request, slug):
     track_activity(request.user, 'book', book.pk, book.title)
 
     # Payment context
-    from payments.models import ContentPrice, AccessGrant
-    book_price = None
-    has_access = book.is_free  # free books always accessible
+    from payments.models import ContentPrice, AccessGrant, Purchase
+    book_price    = None
+    has_access    = book.is_free
+    purchase_txn  = ''
+
     try:
         book_price = ContentPrice.objects.get(content_type='book', object_id=book.pk, is_active=True)
-        if not has_access and request.user.is_authenticated:
-            has_access = AccessGrant.objects.filter(
-                buyer=request.user, content_type='book', object_id=book.pk
-            ).exists()
+        if not has_access:
+            if book_price.is_free:
+                has_access = True
+            elif request.user.is_authenticated:
+                if request.user.is_any_admin():
+                    has_access = True
+                else:
+                    has_access = AccessGrant.objects.filter(
+                        buyer=request.user, content_type='book', object_id=book.pk
+                    ).exists()
+                    if has_access:
+                        # Get the transaction ID for the "View Receipt" link
+                        p = Purchase.objects.filter(
+                            buyer=request.user,
+                            content_price=book_price,
+                            status='completed',
+                        ).order_by('-completed_at').first()
+                        purchase_txn = p.transaction_id if p else ''
     except ContentPrice.DoesNotExist:
-        has_access = True  # no price set — treat as free
+        has_access = True   # no price set → free access
 
-    # Send access notification if user has access and is viewing
+    # Send access notification to book owner
     if has_access and book.added_by and request.user.is_authenticated:
         from payments.emails import send_access_notification
         send_access_notification(
@@ -281,9 +297,10 @@ def book_detail(request, slug):
         )
 
     return render(request, 'publishing/book_detail.html', {
-        'book':       book,
-        'book_price': book_price,
-        'has_access': has_access,
+        'book':         book,
+        'book_price':   book_price,
+        'has_access':   has_access,
+        'purchase_txn': purchase_txn,
     })
 
 

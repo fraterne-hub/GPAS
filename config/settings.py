@@ -17,13 +17,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ──────────────────────────────────────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY', default='change-me-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
-
+ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
 # ──────────────────────────────────────────────────────────────────────────────
 # Application definition
 # ──────────────────────────────────────────────────────────────────────────────
 DJANGO_APPS = [
-    'whitenoise.runserver_nostatic'
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -59,13 +57,12 @@ LOCAL_APPS = [
     'payments',
 ]
 
-INSTALLED_APPS ='whitenoise.runserver_nostatic' + DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Middleware
 # ──────────────────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
-    'whitenoise.middleware.security.securityMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -192,13 +189,16 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024   # 20 MB
 
-ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'application/msword',
-                           'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+ALLOWED_DOCUMENT_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
 ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Security headers (production)
+# Security headers (production only)
 # ──────────────────────────────────────────────────────────────────────────────
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
@@ -211,11 +211,11 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
 
 # ──────────────────────────────────────────────────────────────────────────────
-# CSRF settings — fix 403 errors on POST forms
+# CSRF — fix 403 on POST forms
 # ──────────────────────────────────────────────────────────────────────────────
-CSRF_COOKIE_HTTPONLY  = False       # must be False so JS can read the cookie
-CSRF_COOKIE_SAMESITE  = 'Lax'      # default, but explicit helps some browsers
-CSRF_TRUSTED_ORIGINS  = [           # needed if behind a proxy or accessing by IP
+CSRF_COOKIE_HTTPONLY = False      # JS needs to read the token
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
@@ -223,11 +223,11 @@ CSRF_TRUSTED_ORIGINS  = [           # needed if behind a proxy or accessing by I
 # ──────────────────────────────────────────────────────────────────────────────
 # Session
 # ──────────────────────────────────────────────────────────────────────────────
-SESSION_COOKIE_AGE = 86400 * 7  # 7 days
+SESSION_COOKIE_AGE = 86400 * 7   # 7 days
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Pagination defaults
+# Pagination
 # ──────────────────────────────────────────────────────────────────────────────
 DEFAULT_PAGE_SIZE = 20
 SEARCH_PAGE_SIZE = 15
@@ -236,26 +236,19 @@ SEARCH_PAGE_SIZE = 15
 # GARL platform settings
 # ──────────────────────────────────────────────────────────────────────────────
 GARL_SITE_NAME = config('SITE_NAME', default='Global Academic Research Library')
-GARL_SITE_URL = config('SITE_URL', default='http://localhost:8000')
-GARL_VERSION = '1.0.0'
+GARL_SITE_URL  = config('SITE_URL',  default='http://localhost:8000')
+GARL_VERSION   = '1.0.0'
 
 # ──────────────────────────────────────────────────────────────────────────────
 # AI Support Assistant
 # ──────────────────────────────────────────────────────────────────────────────
-# Optional: set GARL_AI_API_KEY in .env to enable LLM-enhanced answers.
-# Works without it — falls back to pure retrieval-based answers.
-GARL_AI_API_KEY = config('GARL_AI_API_KEY', default='')
-GARL_AI_API_URL = config('GARL_AI_API_URL', default='https://api.openai.com/v1/chat/completions')
-GARL_AI_MODEL   = config('GARL_AI_MODEL', default='gpt-3.5-turbo')
-# Max messages stored per session before old ones are pruned
+GARL_AI_API_KEY  = config('GARL_AI_API_KEY',  default='')
+GARL_AI_API_URL  = config('GARL_AI_API_URL',  default='https://api.openai.com/v1/chat/completions')
+GARL_AI_MODEL    = config('GARL_AI_MODEL',    default='gpt-3.5-turbo')
 GARL_AI_MAX_HISTORY = 100
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Payments & Revenue
 # ──────────────────────────────────────────────────────────────────────────────
-# Email address that receives platform owner sale alerts (set in .env)
-GARL_OWNER_EMAIL = config('GARL_OWNER_EMAIL', default='')
-# Default currency for the platform
-GARL_DEFAULT_CURRENCY = config('GARL_DEFAULT_CURRENCY',
- default='USD')
- 
+GARL_OWNER_EMAIL      = config('GARL_OWNER_EMAIL',      default='')
+GARL_DEFAULT_CURRENCY = config('GARL_DEFAULT_CURRENCY', default='USD')

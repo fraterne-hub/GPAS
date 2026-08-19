@@ -9,71 +9,39 @@ from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
+from core.views import newsletter_subscribe
 
 urlpatterns = [
-    # Django admin — primary URL
+    # Django admin
     path('django-admin/', admin.site.urls),
-
-    # /admin/ redirects to /django-admin/ (familiar URL alias)
     path('admin/', RedirectView.as_view(url='/django-admin/', permanent=False)),
     path('admin', RedirectView.as_view(url='/django-admin/', permanent=False)),
 
-    # i18n
+    # i18n language switcher — outside i18n_patterns
     path('i18n/', include('django.conf.urls.i18n')),
+
+    # Newsletter subscribe — global, no language prefix needed
+    path('newsletter/subscribe/', newsletter_subscribe, name='newsletter_subscribe'),
 ]
 
 urlpatterns += i18n_patterns(
-    # Core / homepage
     path('', include('core.urls', namespace='core')),
-
-    # Authentication
     path('accounts/', include('accounts.urls', namespace='accounts')),
-
-    # Dashboard (role-based)
     path('dashboard/', include('dashboard.urls', namespace='dashboard')),
-
-    # Research Center
     path('research/', include('research.urls', namespace='research')),
-
-    # Publishing Center
     path('publishing/', include('publishing.urls', namespace='publishing')),
-
-    # Innovation Hub
     path('innovation/', include('innovation.urls', namespace='innovation')),
-
-    # Learning Center
     path('learning/', include('learning.urls', namespace='learning')),
-
-    # Health Science Hub
     path('health/', include('health_science.urls', namespace='health_science')),
-
-    # Library
     path('library/', include('library.urls', namespace='library')),
-
-    # Events
     path('events/', include('events.urls', namespace='events')),
-
-    # Community & Directory
     path('community/', include('community.urls', namespace='community')),
-
-    # Support Center
     path('support/', include('support.urls', namespace='support')),
-
-    # Notifications
     path('notifications/', include('notifications.urls', namespace='notifications')),
-
-    # Global Search
     path('search/', include('search.urls', namespace='search')),
-
-    # AI Support Assistant
     path('ai-support/', include('ai_support.urls', namespace='ai_support')),
-
-    # Payments & Revenue
     path('payments/', include('payments.urls', namespace='payments')),
-
-    # Analytics
     path('analytics/', include('analytics.urls', namespace='analytics')),
-
     prefix_default_language=False,
 )
 
@@ -83,7 +51,7 @@ handler403 = 'core.views.error_403'
 handler404 = 'core.views.error_404'
 handler500 = 'core.views.error_500'
 
-# Serve media files in development
+# Always serve media files in development (DEBUG=True)
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -247,3 +247,23 @@ class SiteSettings(models.Model):
     def delete(self, *args, **kwargs):
         # Prevent deletion of the singleton
         pass
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Newsletter Subscriber
+# ──────────────────────────────────────────────────────────────────────────────
+class NewsletterSubscriber(models.Model):
+    email           = models.EmailField(unique=True, db_index=True)
+    name            = models.CharField(max_length=200, blank=True)
+    is_active       = models.BooleanField(default=True)
+    subscribed_at   = models.DateTimeField(auto_now_add=True)
+    unsubscribed_at = models.DateTimeField(null=True, blank=True)
+    ip_address      = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        verbose_name        = _('newsletter subscriber')
+        verbose_name_plural = _('newsletter subscribers')
+        ordering            = ['-subscribed_at']
+
+    def __str__(self):
+        return self.email

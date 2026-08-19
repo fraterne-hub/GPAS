@@ -145,7 +145,58 @@ document.addEventListener('submit', function (e) {
   if (msg && !window.confirm(msg)) e.preventDefault();
 });
 
-// ═══════════════════════════════════════════════════ CSRF TOKEN HELPER ══
+// ═══════════════════════════════════════════════ NEWSLETTER SUBSCRIBE ══
+(function () {
+  const form   = document.getElementById('newsletterForm');
+  const input  = document.getElementById('newsletterEmail');
+  const btn    = document.getElementById('newsletterBtn');
+  const msgEl  = document.getElementById('newsletterMsg');
+  if (!form) return;
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const email = input?.value.trim();
+    if (!email) return;
+
+    btn.disabled    = true;
+    btn.textContent = 'Subscribing…';
+
+    try {
+      const resp = await fetch('/newsletter/subscribe/', {
+        method:  'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken':  getCsrfToken(),
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await resp.json();
+
+      if (msgEl) {
+        msgEl.classList.remove('d-none', 'text-success', 'text-danger');
+        if (data.ok) {
+          msgEl.classList.add('text-success');
+          msgEl.textContent = data.message || 'Subscribed successfully!';
+          if (input) { input.value = ''; input.disabled = true; }
+          if (btn)   { btn.textContent = '✓ Subscribed'; }
+        } else {
+          msgEl.classList.add('text-danger');
+          msgEl.textContent = data.error || 'Something went wrong. Please try again.';
+          btn.disabled    = false;
+          btn.textContent = 'Subscribe';
+        }
+      }
+    } catch (err) {
+      if (msgEl) {
+        msgEl.classList.remove('d-none');
+        msgEl.classList.add('text-danger');
+        msgEl.textContent = 'Connection error. Please try again.';
+      }
+      if (btn) { btn.disabled = false; btn.textContent = 'Subscribe'; }
+    }
+  });
+})();
+
 function getCsrfToken() {
   const el = document.querySelector('[name=csrfmiddlewaretoken]');
   if (el) return el.value;

@@ -9,7 +9,7 @@ Tags:
 """
 
 from django import template
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe
 
 register = template.Library()
 
@@ -29,14 +29,17 @@ def content_price_badge(content_type, object_id):
     """Render an HTML badge showing price or FREE."""
     price = _get_price(content_type, object_id)
     if price is None or price.is_free:
-        return format_html(
+        # No format args needed — use mark_safe for static HTML
+        return mark_safe(
             '<span class="badge bg-success-subtle text-success-emphasis">'
             '<i class="bi bi-unlock-fill me-1"></i>Free</span>'
         )
+    # Dynamic values — use format_html to escape them safely
     return format_html(
         '<span class="badge" style="background:var(--garl-gold);color:#fff;">'
-        '<i class="bi bi-lock-fill me-1"></i>{} {}</span>',
-        price.currency, price.price
+        '<i class="bi bi-lock-fill me-1"></i>{currency} {price}</span>',
+        currency=price.currency,
+        price=price.price,
     )
 
 

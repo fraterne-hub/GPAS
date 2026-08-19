@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.contrib import admin
 from django.utils.html import format_html
-from .models import Subject, Tag, Announcement, Bookmark, ActivityHistory, PlatformStatistic, SiteSettings
+from .models import Subject, Tag, Announcement, Bookmark, ActivityHistory, PlatformStatistic, SiteSettings, NewsletterSubscriber
 
 
 @admin.register(Subject)
@@ -99,3 +100,21 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             )
         return '—'
     logo_preview.short_description = 'Logo Preview'
+
+
+@admin.register(NewsletterSubscriber)
+class NewsletterSubscriberAdmin(admin.ModelAdmin):
+    list_display    = ('email', 'name', 'is_active', 'subscribed_at', 'ip_address')
+    list_filter     = ('is_active',)
+    search_fields   = ('email', 'name')
+    readonly_fields = ('subscribed_at', 'ip_address')
+    actions         = ['deactivate_selected', 'reactivate_selected']
+
+    def deactivate_selected(self, request, queryset):
+        from django.utils import timezone
+        queryset.update(is_active=False, unsubscribed_at=timezone.now())
+    deactivate_selected.short_description = 'Deactivate selected subscribers'
+
+    def reactivate_selected(self, request, queryset):
+        queryset.update(is_active=True, unsubscribed_at=None)
+    reactivate_selected.short_description = 'Re-activate selected subscribers'

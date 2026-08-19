@@ -116,3 +116,75 @@ def error_404(request, exception=None):
 
 def error_500(request):
     return render(request, 'errors/500.html', status=500)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Newsletter Subscribe (AJAX POST)
+# ──────────────────────────────────────────────────────────────────────────────
+@require_POST
+def newsletter_subscribe(request):
+    """
+    AJAX endpoint — saves a newsletter subscriber email.
+    Returns JSON so the frontend can show a success/error message
+    without a page reload.
+    """
+    import json
+    from django.core.validators import validate_email
+    from django.core.exceptions import ValidationError
+    from .models import NewsletterSubscriber
+
+    try:
+        data  = json.loads(request.body)
+        email = data.get('email', '').strip().lower()
+    except (json.JSONDecodeError, AttributeError):
+        # Also accept regular form POST
+        email = request.POST.get('email', '').strip().lower()
+
+    if not email:
+        return JsonResponse({'ok': False, 'error': 'Please enter your email address.'}, status=400)
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        return JsonResponse({'ok': False, 'error': 'Please enter a valid email address.'}, status=400)
+
+    ip = getattr(request, 'client_ip', request.META.get('REMOTE_ADDR', ''))
+
+    subscriber, created = NewsletterSubscriber.objects.get_or_create(
+        email=email,
+        defaults={
+            'ip_address': ip,
+            'is_active':  True,
+        }
+    )
+
+    if not created:
+        if subscriber.is_active:
+            return JsonResponse({'ok': True, 'message': "You're already subscribed. Thank you!"})
+        else:
+            # Re-subscribe
+            subscriber.is_active       = True
+            subscriber.unsubscribed_at = None
+            subscriber.save(update_fields=['is_active', 'unsubscribed_at'])
+            return JsonResponse({'ok': True, 'message': 'Welcome back! You have been re-subscribed.'})
+
+    # Send a welcome email
+    try:
+        from django.core.mail import send_mail
+        from django.conf import settings
+        site_name = getattr(settings, 'GARL_SITE_NAME', 'GARL')
+        send_mail(
+            subject=f'Welcome to {site_name} Newsletter!',
+            message=(
+                f'Hi,\n\nThank you for subscribing to the {site_name} newsletter.\n\n'
+                'You will receive updates about new research, courses, publications and events.\n\n'
+                f'— The {site_name} Team'
+            ),
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'{site_name} <noreply@garl.edu>'),
+            recipient_list=[email],
+            fail_silently=True,
+        )
+    except Exception:
+        pass
+
+    return JsonResponse({'ok': True, 'message': f"You've been subscribed! Check your email for confirmation."})
