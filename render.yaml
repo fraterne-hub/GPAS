@@ -2,14 +2,10 @@ services:
   - type: web
     name: gpas
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: bash build.sh
     startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
     healthCheckPath: /
-    disk:
-      name: media
-      mountPath: /opt/render/project/src/media
-      sizeGB: 10
     envVars:
       - key: DATABASE_URL
         fromDatabase:
