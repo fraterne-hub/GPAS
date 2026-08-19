@@ -6,6 +6,7 @@ Django Settings
 import os
 from pathlib import Path
 from decouple import config, Csv
+import dj_database_url
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Base directory
@@ -17,7 +18,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ──────────────────────────────────────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY', default='change-me-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='.onrender.com,.vercel.app,localhost,127.0.0.1',
+    cast=Csv(),
+)
+if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
+    ALLOWED_HOSTS.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
 # ──────────────────────────────────────────────────────────────────────────────
 # Application definition
 # ──────────────────────────────────────────────────────────────────────────────
@@ -104,10 +111,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # ──────────────────────────────────────────────────────────────────────────────
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -201,6 +209,7 @@ MAX_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB
 # Security headers (production only)
 # ──────────────────────────────────────────────────────────────────────────────
 if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
@@ -219,6 +228,11 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
 ]
+for origin in config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv()):
+    if origin and origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+if os.environ.get('RENDER_EXTERNAL_URL'):
+    CSRF_TRUSTED_ORIGINS.append(os.environ['RENDER_EXTERNAL_URL'])
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Session
