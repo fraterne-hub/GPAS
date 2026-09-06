@@ -114,19 +114,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Use PostgreSQL on Render (DATABASE_URL env var is set automatically).
 # Fall back to SQLite3 for local development when DATABASE_URL is not set.
 # ──────────────────────────────────────────────────────────────────────────────
-DATABASE_URL = os.environ.get('DATABASE_URL', '')
+_DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 
-if DATABASE_URL:
+# Only treat it as a real URL when it actually starts with a DB scheme.
+# This guards against Render setting DATABASE_URL='' (empty placeholder).
+_DB_SCHEMES = ('postgres://', 'postgresql://', 'postgis://', 'mysql://',
+               'sqlite://', 'cockroach://')
+
+if _DATABASE_URL and any(_DATABASE_URL.startswith(s) for s in _DB_SCHEMES):
     # Render / production: use the provided PostgreSQL URL
     DATABASES = {
         'default': dj_database_url.parse(
-            DATABASE_URL,
+            _DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
         )
     }
 else:
-    # Local development: SQLite3
+    # Local development (or Render before a DB is attached): SQLite3
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -183,9 +188,9 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # On Render (or any host where CLOUDINARY_URL is set): files are stored in
 # Cloudinary so they persist across deploys and restarts.
 # ──────────────────────────────────────────────────────────────────────────────
-CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '')
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '').strip()
 
-if CLOUDINARY_URL:
+if CLOUDINARY_URL and CLOUDINARY_URL.startswith('cloudinary://'):
     # Production — use Cloudinary for media uploads
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = '/media/'          # kept for template compatibility
