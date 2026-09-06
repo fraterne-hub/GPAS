@@ -1,7 +1,7 @@
 import subprocess, sys
 
 result = subprocess.run(
-    [sys.executable, "manage.py", "check"],
+    [sys.executable, "manage.py", "migrate"],
     capture_output=True,
     text=True,
     cwd=r"c:\Users\USER\Desktop\GPAS"
