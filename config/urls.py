@@ -51,7 +51,13 @@ handler403 = 'core.views.error_403'
 handler404 = 'core.views.error_404'
 handler500 = 'core.views.error_500'
 
-# Always serve media files in development (DEBUG=True)
-if settings.DEBUG:
+# Serve media files locally when Cloudinary is NOT configured.
+# When CLOUDINARY_URL is set (production), Cloudinary handles media delivery
+# and these local routes are not needed.
+import os as _os
+if not _os.environ.get('CLOUDINARY_URL', ''):
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Serve static files in development (WhiteNoise handles this in production)
+if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

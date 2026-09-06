@@ -5,6 +5,8 @@ set -o errexit
 # Install dependencies
 pip install -r requirements.txt
 
-# Run Django management commands
+# Collect static files (WhiteNoise serves them)
 python manage.py collectstatic --no-input
+
+# Apply database migrations
 python manage.py migrate

@@ -42,6 +42,8 @@ THIRD_PARTY_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'django_extensions',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 LOCAL_APPS = [
@@ -109,14 +111,28 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Database
+# Use PostgreSQL on Render (DATABASE_URL env var is set automatically).
+# Fall back to SQLite3 for local development when DATABASE_URL is not set.
 # ──────────────────────────────────────────────────────────────────────────────
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+
+if DATABASE_URL:
+    # Render / production: use the provided PostgreSQL URL
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    # Local development: SQLite3
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Custom user model
@@ -163,9 +179,21 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Media files
+# Locally: files are stored in MEDIA_ROOT and served by Django/WhiteNoise.
+# On Render (or any host where CLOUDINARY_URL is set): files are stored in
+# Cloudinary so they persist across deploys and restarts.
 # ──────────────────────────────────────────────────────────────────────────────
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '')
+
+if CLOUDINARY_URL:
+    # Production — use Cloudinary for media uploads
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    MEDIA_URL = '/media/'          # kept for template compatibility
+    MEDIA_ROOT = BASE_DIR / 'media'  # unused when Cloudinary is active
+else:
+    # Local development — use local filesystem
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Default primary key
