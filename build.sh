@@ -6,7 +6,6 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py migrate
 
-# One-time superuser bootstrap (inline — prints clearly)
 python - <<'PY'
 import os, django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
