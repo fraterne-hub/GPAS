@@ -8,14 +8,14 @@ from pathlib import Path
 from decouple import config, Csv
 import dj_database_url
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # Base directory
 # ──────────────────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # Security
-# ──────────────────────────────────────────────────────────────────────────────
+
 SECRET_KEY = config('SECRET_KEY', default='change-me-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config(
@@ -252,9 +252,9 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # CSRF — fix 403 on POST forms
-# ──────────────────────────────────────────────────────────────────────────────
+
 CSRF_COOKIE_HTTPONLY = False      # JS needs to read the token
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = [
@@ -267,35 +267,35 @@ for origin in config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv()):
 if os.environ.get('RENDER_EXTERNAL_URL'):
     CSRF_TRUSTED_ORIGINS.append(os.environ['RENDER_EXTERNAL_URL'])
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # Session
-# ──────────────────────────────────────────────────────────────────────────────
+
 SESSION_COOKIE_AGE = 86400 * 7   # 7 days
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # Pagination
-# ──────────────────────────────────────────────────────────────────────────────
+
 DEFAULT_PAGE_SIZE = 20
 SEARCH_PAGE_SIZE = 15
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # GARL platform settings
-# ──────────────────────────────────────────────────────────────────────────────
+
 GARL_SITE_NAME = config('SITE_NAME', default='Global Academic Research Library')
 GARL_SITE_URL  = config('SITE_URL',  default='http://localhost:8000')
 GARL_VERSION   = '1.0.0'
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # AI Support Assistant
-# ──────────────────────────────────────────────────────────────────────────────
+
 GARL_AI_API_KEY  = config('GARL_AI_API_KEY',  default='')
 GARL_AI_API_URL  = config('GARL_AI_API_URL',  default='https://api.openai.com/v1/chat/completions')
 GARL_AI_MODEL    = config('GARL_AI_MODEL',    default='gpt-3.5-turbo')
 GARL_AI_MAX_HISTORY = 100
 
-# ──────────────────────────────────────────────────────────────────────────────
+
 # Payments & Revenue
-# ──────────────────────────────────────────────────────────────────────────────
+
 GARL_OWNER_EMAIL      = config('GARL_OWNER_EMAIL',      default='')
 GARL_DEFAULT_CURRENCY = config('GARL_DEFAULT_CURRENCY', default='USD')
