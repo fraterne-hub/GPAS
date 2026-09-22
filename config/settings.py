@@ -192,10 +192,10 @@ WHITENOISE_USE_FINDERS = True
 #
 # If neither is set → local filesystem (dev fallback).
 # ──────────────────────────────────────────────────────────────────────────────
-CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '').strip()
-CLOUD_NAME     = os.environ.get('CLOUDINARY_CLOUD_NAME', '').strip()
-API_KEY        = os.environ.get('CLOUDINARY_API_KEY', '').strip()
-API_SECRET     = os.environ.get('CLOUDINARY_API_SECRET', '').strip()
+CLOUDINARY_URL = config('CLOUDINARY_URL', default='').strip()
+CLOUD_NAME     = config('CLOUDINARY_CLOUD_NAME', default='').strip()
+API_KEY        = config('CLOUDINARY_API_KEY', default='').strip()
+API_SECRET     = config('CLOUDINARY_API_SECRET', default='').strip()
 
 _USE_CLOUDINARY = False
 
