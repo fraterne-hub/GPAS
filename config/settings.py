@@ -25,6 +25,7 @@ ALLOWED_HOSTS = config(
 )
 if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
     ALLOWED_HOSTS.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Application definition
 # ──────────────────────────────────────────────────────────────────────────────
@@ -116,13 +117,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # ──────────────────────────────────────────────────────────────────────────────
 _DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 
-# Only treat it as a real URL when it actually starts with a DB scheme.
-# This guards against Render setting DATABASE_URL='' (empty placeholder).
 _DB_SCHEMES = ('postgres://', 'postgresql://', 'postgis://', 'mysql://',
                'sqlite://', 'cockroach://')
 
 if _DATABASE_URL and any(_DATABASE_URL.startswith(s) for s in _DB_SCHEMES):
-    # Render / production: use the provided PostgreSQL URL
     DATABASES = {
         'default': dj_database_url.parse(
             _DATABASE_URL,
@@ -131,7 +129,6 @@ if _DATABASE_URL and any(_DATABASE_URL.startswith(s) for s in _DB_SCHEMES):
         )
     }
 else:
-    # Local development (or Render before a DB is attached): SQLite3
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -175,7 +172,7 @@ LANGUAGES = [
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Static files
+# Static files (CSS/JS — served by WhiteNoise)
 # ──────────────────────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -184,21 +181,38 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 WHITENOISE_USE_FINDERS = True
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Media files
-# Locally: files are stored in MEDIA_ROOT and served by Django/WhiteNoise.
-# On Render (or any host where CLOUDINARY_URL is set): files are stored in
-# Cloudinary so they persist across deploys and restarts.
+# Media files  → Cloudinary
+#
+# Accepts EITHER:
+#   1) CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
+#   2) Three separate vars:
+#         CLOUDINARY_CLOUD_NAME
+#         CLOUDINARY_API_KEY
+#         CLOUDINARY_API_SECRET
+#
+# If neither is set → local filesystem (dev fallback).
 # ──────────────────────────────────────────────────────────────────────────────
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '').strip()
+CLOUD_NAME     = os.environ.get('CLOUDINARY_CLOUD_NAME', '').strip()
+API_KEY        = os.environ.get('CLOUDINARY_API_KEY', '').strip()
+API_SECRET     = os.environ.get('CLOUDINARY_API_SECRET', '').strip()
 
-if CLOUDINARY_URL and CLOUDINARY_URL.startswith('cloudinary://'):
-    # Production — use Cloudinary for media uploads
+_USE_CLOUDINARY = False
+
+if CLOUDINARY_URL.startswith('cloudinary://'):
+    _USE_CLOUDINARY = True
+elif CLOUD_NAME and API_KEY and API_SECRET:
+    # Build the URL so django-cloudinary-storage finds it
+    os.environ['CLOUDINARY_URL'] = f'cloudinary://{API_KEY}:{API_SECRET}@{CLOUD_NAME}'
+    CLOUDINARY_URL = os.environ['CLOUDINARY_URL']
+    _USE_CLOUDINARY = True
+
+if _USE_CLOUDINARY:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    MEDIA_URL = '/media/'          # kept for template compatibility
-    MEDIA_ROOT = BASE_DIR / 'media'  # unused when Cloudinary is active
+    MEDIA_URL  = '/media/'               # kept for template compatibility
+    MEDIA_ROOT = BASE_DIR / 'media'      # unused when Cloudinary is active
 else:
-    # Local development — use local filesystem
-    MEDIA_URL = '/media/'
+    MEDIA_URL  = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -253,15 +267,15 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-
-# CSRF — fix 403 on POST forms
-
-CSRF_COOKIE_HTTPONLY = False      # JS needs to read the token
+# ──────────────────────────────────────────────────────────────────────────────
+# CSRF
+# ──────────────────────────────────────────────────────────────────────────────
+CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
-    'https://researchhubb.onrender.com',      # ← ADDED — your real domain
+    'https://researchhubb.onrender.com',
 ]
 for origin in config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv()):
     if origin and origin not in CSRF_TRUSTED_ORIGINS:
@@ -269,35 +283,35 @@ for origin in config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv()):
 if os.environ.get('RENDER_EXTERNAL_URL'):
     CSRF_TRUSTED_ORIGINS.append(os.environ['RENDER_EXTERNAL_URL'])
 
-
+# ──────────────────────────────────────────────────────────────────────────────
 # Session
-
+# ──────────────────────────────────────────────────────────────────────────────
 SESSION_COOKIE_AGE = 86400 * 7   # 7 days
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-
+# ──────────────────────────────────────────────────────────────────────────────
 # Pagination
-
+# ──────────────────────────────────────────────────────────────────────────────
 DEFAULT_PAGE_SIZE = 20
 SEARCH_PAGE_SIZE = 15
 
-
+# ──────────────────────────────────────────────────────────────────────────────
 # GARL platform settings
-
+# ──────────────────────────────────────────────────────────────────────────────
 GARL_SITE_NAME = config('SITE_NAME', default='Global Academic Research Library')
 GARL_SITE_URL  = config('SITE_URL',  default='http://localhost:8000')
 GARL_VERSION   = '1.0.0'
 
-
+# ──────────────────────────────────────────────────────────────────────────────
 # AI Support Assistant
-
+# ──────────────────────────────────────────────────────────────────────────────
 GARL_AI_API_KEY  = config('GARL_AI_API_KEY',  default='')
 GARL_AI_API_URL  = config('GARL_AI_API_URL',  default='https://api.openai.com/v1/chat/completions')
 GARL_AI_MODEL    = config('GARL_AI_MODEL',    default='gpt-3.5-turbo')
 GARL_AI_MAX_HISTORY = 100
 
-
+# ──────────────────────────────────────────────────────────────────────────────
 # Payments & Revenue
-
+# ──────────────────────────────────────────────────────────────────────────────
 GARL_OWNER_EMAIL      = config('GARL_OWNER_EMAIL',      default='')
 GARL_DEFAULT_CURRENCY = config('GARL_DEFAULT_CURRENCY', default='USD')
