@@ -1,3 +1,4 @@
+
 """
 GARL - Global Academic Research Library
 Django Settings
