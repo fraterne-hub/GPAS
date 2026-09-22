@@ -1,4 +1,3 @@
-
 """
 GARL - Global Academic Research Library
 Django Settings
@@ -261,6 +260,7 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'https://researchhubb.onrender.com',      # ← ADDED — your real domain
 ]
 for origin in config('CSRF_TRUSTED_ORIGINS', default='', cast=Csv()):
     if origin and origin not in CSRF_TRUSTED_ORIGINS:
