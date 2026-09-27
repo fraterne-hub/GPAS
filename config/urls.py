@@ -3,15 +3,36 @@ GARL - Global Academic Research Library
 Root URL Configuration
 """
 
+import os
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
+from django.http import JsonResponse
 from core.views import newsletter_subscribe
 
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Diagnostic endpoint — remove after confirming Cloudinary works
+# ──────────────────────────────────────────────────────────────────────────────
+def _storage_check(request):
+    return JsonResponse({
+        'DEFAULT_FILE_STORAGE': getattr(settings, 'DEFAULT_FILE_STORAGE', 'NOT SET'),
+        'CLOUD_NAME_env': os.environ.get('CLOUDINARY_CLOUD_NAME', 'NOT SET'),
+        'API_KEY_env': (os.environ.get('CLOUDINARY_API_KEY') or 'NOT SET')[:6] + '...',
+        'API_SECRET_env': 'SET' if os.environ.get('CLOUDINARY_API_SECRET') else 'NOT SET',
+        'CLOUDINARY_URL_built': (os.environ.get('CLOUDINARY_URL') or 'NOT SET')[:25] + '...',
+        'MEDIA_URL': settings.MEDIA_URL,
+        'DEBUG': settings.DEBUG,
+    })
+
+
 urlpatterns = [
+    # Diagnostic — remove once Cloudinary is confirmed working
+    path('_storage-check/', _storage_check),
+
     # Django admin
     path('django-admin/', admin.site.urls),
     path('admin/', RedirectView.as_view(url='/django-admin/', permanent=False)),
@@ -51,11 +72,13 @@ handler403 = 'core.views.error_403'
 handler404 = 'core.views.error_404'
 handler500 = 'core.views.error_500'
 
-# Serve media files locally when Cloudinary is NOT configured.
-# When CLOUDINARY_URL is set (production), Cloudinary handles media delivery
-# and these local routes are not needed.
-import os as _os
-if not _os.environ.get('CLOUDINARY_URL', ''):
+# ──────────────────────────────────────────────────────────────────────────────
+# Serve /media/ locally ONLY when Cloudinary is NOT active.
+# We check the SAME flag that settings.py uses, so they can never disagree.
+# ──────────────────────────────────────────────────────────────────────────────
+_using_cloudinary = getattr(settings, 'DEFAULT_FILE_STORAGE', '').startswith('cloudinary')
+
+if not _using_cloudinary and settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Serve static files in development (WhiteNoise handles this in production)
