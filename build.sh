@@ -3,9 +3,24 @@ set -o errexit
 
 pip install -r requirements.txt
 
+# ── Debug: confirm Cloudinary env vars reach the build ────────────────────────
+echo "=== ENV CHECK ==="
+python - <<'PY'
+import os
+print("CLOUD_NAME:", os.environ.get("CLOUDINARY_CLOUD_NAME"))
+print("API_KEY:", (os.environ.get("CLOUDINARY_API_KEY") or "NOT SET")[:6] + "...")
+print("API_SECRET:", "SET" if os.environ.get("CLOUDINARY_API_SECRET") else "NOT SET")
+print("CLOUDINARY_URL:", (os.environ.get("CLOUDINARY_URL") or "NOT SET")[:35])
+PY
+echo "=== END ENV CHECK ==="
+
+# ── Static files (WhiteNoise serves them) ─────────────────────────────────────
 python manage.py collectstatic --no-input
+
+# ── Database migrations ───────────────────────────────────────────────────────
 python manage.py migrate
 
+# ── One-time superuser bootstrap ──────────────────────────────────────────────
 python - <<'PY'
 import os, django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
