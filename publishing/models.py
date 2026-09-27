@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.utils.text import slugify
 from django.utils import timezone
+from cloudinary_storage.storage import MediaCloudinaryStorage
 from core.models import Subject, Tag
 
 
@@ -33,7 +34,7 @@ class Journal(models.Model):
     e_issn          = models.CharField(max_length=20, blank=True)
     description     = models.TextField(blank=True)
     subjects        = models.ManyToManyField(Subject, blank=True)
-    cover_image     = models.ImageField(upload_to='journals/covers/', null=True, blank=True)
+    cover_image     = models.ImageField(upload_to='journals/covers/', storage=MediaCloudinaryStorage(), null=True, blank=True)
     publisher       = models.CharField(max_length=300, blank=True)
     website         = models.URLField(blank=True)
     is_open_access  = models.BooleanField(default=True)
@@ -90,8 +91,8 @@ class Publication(models.Model):
     journal_issue   = models.ForeignKey(JournalIssue, on_delete=models.SET_NULL, null=True, blank=True, related_name='publications')
     subjects        = models.ManyToManyField(Subject, blank=True)
     tags            = models.ManyToManyField(Tag, blank=True)
-    manuscript      = models.FileField(upload_to='publishing/manuscripts/', null=True, blank=True)
-    cover_image     = models.ImageField(upload_to='publishing/covers/', null=True, blank=True)
+    manuscript      = models.FileField(upload_to='publishing/manuscripts/', storage=MediaCloudinaryStorage(), null=True, blank=True)
+    cover_image     = models.ImageField(upload_to='publishing/covers/', storage=MediaCloudinaryStorage(), null=True, blank=True)
     doi             = models.CharField(max_length=200, blank=True)
     isbn            = models.CharField(max_length=30, blank=True)
     language        = models.CharField(max_length=50, default='English')
@@ -133,7 +134,7 @@ class PublicationAuthor(models.Model):
     user        = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
     )
-    name        = models.CharField(max_length=300)   # in case author has no account
+    name        = models.CharField(max_length=300)
     email       = models.EmailField(blank=True)
     affiliation = models.CharField(max_length=300, blank=True)
     is_corresponding = models.BooleanField(default=False)
@@ -202,7 +203,7 @@ class Revision(models.Model):
     requested_at    = models.DateTimeField(auto_now_add=True)
     deadline        = models.DateField(null=True, blank=True)
     instructions    = models.TextField()
-    revised_file    = models.FileField(upload_to='publishing/revisions/', null=True, blank=True)
+    revised_file    = models.FileField(upload_to='publishing/revisions/', storage=MediaCloudinaryStorage(), null=True, blank=True)
     author_response = models.TextField(blank=True)
     submitted_at    = models.DateTimeField(null=True, blank=True)
     is_complete     = models.BooleanField(default=False)
@@ -216,8 +217,8 @@ class Book(models.Model):
     slug        = models.SlugField(unique=True, blank=True)
     subtitle    = models.CharField(max_length=400, blank=True)
     description = models.TextField()
-    cover       = models.ImageField(upload_to='books/covers/', null=True, blank=True)
-    file        = models.FileField(upload_to='books/files/', null=True, blank=True)
+    cover       = models.ImageField(upload_to='books/covers/', storage=MediaCloudinaryStorage(), null=True, blank=True)
+    file        = models.FileField(upload_to='books/files/', storage=MediaCloudinaryStorage(), null=True, blank=True)
     isbn        = models.CharField(max_length=30, blank=True)
     publisher   = models.CharField(max_length=300, blank=True)
     edition     = models.CharField(max_length=50, blank=True)
